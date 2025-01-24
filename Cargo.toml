@@ -1,0 +1,18 @@
+[package]
+name = "rofi-cliphist"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sebastián Zaffarano sebas@zaffarano.com.ar"]
+license = "MIT"
+description = "Rofi extensions"
+readme = "README.md"
+homepage = "https://github.com/szaffarano/rofi-tools"
+repository = "https://github.com/szaffarano/rofi-tools"
+keywords = ["cli", "wayland", "rofi", "linux", "rofi-scripts"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+anyhow = "1.0.95"
+directories-next = "2.0.0"
+indoc = "2.0.5"
+regex = "1.11.1"
