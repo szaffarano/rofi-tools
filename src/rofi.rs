@@ -41,6 +41,7 @@ pub struct RofiOptions {
 pub struct KbCustom {
     key: i32,
     shortcut: String,
+    description: String,
 }
 
 impl Default for RofiOptions {
@@ -82,10 +83,11 @@ impl RofiOptions {
 }
 
 impl KbCustom {
-    pub fn new(key: i32, shortcut: impl Into<String>) -> Self {
+    pub fn new(key: i32, shortcut: impl Into<String>, description: impl Into<String>) -> Self {
         KbCustom {
             key,
             shortcut: shortcut.into(),
+            description: description.into(),
         }
     }
 }
@@ -104,17 +106,27 @@ impl From<&RofiOptions> for Vec<String> {
         if val.no_custom {
             options.push("-no-custom".into());
         }
-        if let Some(mesg) = &val.mesg {
-            options.push("-mesg".into());
-            options.push(mesg.into());
-        }
         if let Some(format) = &val.format {
             options.push("-format".into());
             options.push(format.into());
         }
-        for KbCustom { key, shortcut } in &val.custom_kbs {
+        for KbCustom { key, shortcut, .. } in &val.custom_kbs {
             options.push(format!("-kb-custom-{}", key));
             options.push(shortcut.into());
+        }
+        if !&val.custom_kbs.is_empty() {
+            let mut mesg = String::from("<span size='small' alpha='70%'>");
+            for KbCustom {
+                shortcut,
+                description,
+                ..
+            } in &val.custom_kbs
+            {
+                mesg.push_str(format!("<b>{shortcut}</b>: {description} | ").as_str());
+            }
+            mesg.push_str("</span>");
+            options.push("-mesg".into());
+            options.push(mesg);
         }
         if let Some(prompt) = &val.prompt {
             options.push("-p".into());
@@ -135,34 +147,44 @@ impl Rofi {
         options: &RofiOptions,
         cache: &cache::SimpleCache,
     ) -> RofiResult {
+        let options = if entries.is_empty() {
+            let base_msg = "No clipboard entries to show".into();
+            let error_msg = options
+                .prompt
+                .as_ref()
+                .map(|p| format!("<b>{p}</b>: {base_msg}"))
+                .unwrap_or(base_msg);
+            vec!["-e".into(), error_msg, "-markup".into()]
+        } else {
+            options.into()
+        };
+
         let mut process = Command::new(&self.bin)
-            .args::<Vec<String>, String>(options.into())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
+            .args(options)
             .spawn()
             .expect("Error executing rofi");
 
-        if !entries.is_empty() {
-            if let Some(mut writer) = process.stdin.take() {
-                for entry in entries {
-                    let mut str: Vec<u8> = Vec::new();
-                    str.extend_from_slice(entry.label().to_string().as_bytes());
-                    if let Some(icon) = &entry.icon() {
-                        let cached = cache.path(icon);
-                        if cached.exists() {
-                            str.extend_from_slice(
-                                format!("\0icon\x1f{}", cached.to_str().unwrap()).as_bytes(),
-                            );
-                        } else {
-                            str.extend_from_slice(format!("\0icon\x1f{}", icon).as_bytes());
-                        }
+        if let Some(mut writer) = process.stdin.take() {
+            for entry in entries {
+                let mut str: Vec<u8> = Vec::new();
+                str.extend_from_slice(entry.label().to_string().as_bytes());
+                if let Some(icon) = &entry.icon() {
+                    let cached = cache.path(icon);
+                    if cached.exists() {
+                        str.extend_from_slice(
+                            format!("\0icon\x1f{}", cached.to_str().unwrap()).as_bytes(),
+                        );
+                    } else {
+                        str.extend_from_slice(format!("\0icon\x1f{}", icon).as_bytes());
                     }
-                    str.push(b'\n');
-                    writer
-                        .write_all(&str)
-                        .expect("writing entries to rofi through stdin");
                 }
+                str.push(b'\n');
+                writer
+                    .write_all(&str)
+                    .expect("writing entries to rofi through stdin");
             }
         }
 
