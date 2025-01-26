@@ -1,30 +1,138 @@
 use crate::{
-    cache::{self, CacheEntry},
+    cache::{CacheEntry, SimpleCache},
+    clipboard::Clipboard,
     cliphist::{ClipHist, ClipHistEntry},
-    rofi,
+    rofi::{self, RofiEntry},
 };
 
-use super::KbCustom;
+use super::{KbCustom, Rofi, RofiOptions, RofiResult};
 
-pub struct RofiMode<'a> {
-    pub rofi: rofi::Rofi,
-    pub entries: Vec<&'a dyn rofi::RofiEntry>,
-    pub options: rofi::RofiOptions,
-    pub cache: &'a cache::SimpleCache,
-    pub cliphist: &'a ClipHist,
-}
-
-pub enum Mode {
+enum Mode {
     Text,
     Image,
 }
 
-impl RofiMode<'_> {
-    pub fn run(&self) -> rofi::RofiResult {
-        self.rofi.run(&self.entries, &self.options, self.cache)
+pub struct ClipHistMode {
+    rofi: Rofi,
+    cache: SimpleCache,
+    cliphist: ClipHist,
+    clipboard: Clipboard,
+    txt: RofiState,
+    img: RofiState,
+    mode: Mode,
+}
+
+struct RofiState {
+    entries: Vec<ClipHistEntry>,
+    options: RofiOptions,
+}
+
+impl ClipHistMode {
+    pub fn new(
+        rofi: rofi::Rofi,
+        cache: SimpleCache,
+        cliphist: ClipHist,
+        clipboard: Clipboard,
+    ) -> Self {
+        let (txt, img): (Vec<_>, Vec<_>) = cliphist
+            .list()
+            .into_iter()
+            .partition(|e| matches!(e, ClipHistEntry::Text { .. }));
+
+        Self {
+            rofi,
+            cache,
+            cliphist,
+            clipboard,
+            txt: RofiState {
+                entries: txt,
+                options: RofiOptions::new(
+                    Self::title(Mode::Text),
+                    "",
+                    [
+                        KbCustom::new(1, "Alt+i", "Switch to images"),
+                        KbCustom::new(3, "Alt+d", "Delete entry"),
+                    ],
+                    Self::theme(Mode::Text),
+                ),
+            },
+            img: RofiState {
+                entries: img,
+                options: RofiOptions::new(
+                    Self::title(Mode::Image),
+                    "",
+                    [
+                        KbCustom::new(2, "Alt+t", "Switch to texts"),
+                        KbCustom::new(3, "Alt+d", "Delete entry"),
+                    ],
+                    Self::theme(Mode::Image),
+                ),
+            },
+            mode: Mode::Text,
+        }
     }
 
-    pub fn sync_cache(&self) -> usize {
+    pub fn run(&mut self) {
+        loop {
+            self.sync_cache();
+
+            let current = match self.mode {
+                Mode::Text => &mut self.txt,
+                Mode::Image => &mut self.img,
+            };
+
+            let entries = current
+                .entries
+                .iter()
+                .map(|e| e as &dyn rofi::RofiEntry)
+                .collect::<Vec<_>>();
+
+            match self.rofi.run(&entries, &current.options, &self.cache) {
+                RofiResult::Selection { id } => {
+                    current.options.selected_row = id;
+
+                    let entry = current.entries.get(id).expect("Invalid id");
+                    let cliphist_id = RofiEntry::id(entry);
+                    self.clipboard.copy(self.cliphist.value_of(cliphist_id));
+                    break;
+                }
+                RofiResult::Keyboard { key, id } => {
+                    current.options.selected_row = id;
+
+                    match key {
+                        10 => {
+                            self.mode = Mode::Image;
+                        }
+                        11 => {
+                            self.mode = Mode::Text;
+                        }
+                        12 => {
+                            let entry = current.entries.remove(id);
+                            self.cliphist.remove(RofiEntry::id(&entry));
+                        }
+                        _ => panic!("Unexpected key: {}", key),
+                    }
+                }
+                RofiResult::Cancel => {
+                    // just inform the user and exit
+                    println!("Cancelled");
+                    break;
+                }
+                RofiResult::Signal { key } => {
+                    // just inform the user and exit
+                    println!("Signaled: {key}");
+                    break;
+                }
+                RofiResult::Empty => {
+                    // just inform the user and exit
+                    println!("Empty response");
+                    break;
+                }
+            }
+        }
+    }
+
+    fn sync_cache(&self) -> usize {
         let entries = self.cliphist.list();
 
         let entries = entries
@@ -35,7 +143,7 @@ impl RofiMode<'_> {
         let entries = entries.as_slice();
 
         for entry in entries {
-            if !self.cache.exists(&entry.id()) {
+            if !self.cache.exists(&CacheEntry::id(*entry)) {
                 let id = match entry {
                     ClipHistEntry::Text { id, .. } => id,
                     ClipHistEntry::Image { id, .. } => id,
@@ -53,39 +161,9 @@ impl RofiMode<'_> {
 
         self.cache.prune(exclusions).expect("Error syncing cache")
     }
-}
 
-pub fn mode_help(img_enabled: bool, txt_enabled: bool) -> String {
-    let mut mesg = String::from("<span size='small' alpha='70%'>");
-
-    if img_enabled {
-        mesg.push_str("<b>alt+i</b>: switch to images | ");
-    }
-
-    if txt_enabled {
-        mesg.push_str("<b>alt+t</b>: switch to texts | ");
-    }
-
-    mesg.push_str("<b>alt+d</b>: delete entry");
-    mesg.push_str("</span>");
-
-    mesg
-}
-
-pub fn mode_keybindings(img_enabled: bool, txt_enabled: bool) -> Vec<KbCustom> {
-    let mut kbs = Vec::new();
-    if img_enabled {
-        kbs.push(KbCustom::new(1, "Alt+i"));
-    }
-    if txt_enabled {
-        kbs.push(KbCustom::new(2, "Alt+t"));
-    }
-    kbs.push(KbCustom::new(3, "Alt+d"));
-    kbs
-}
-
-pub fn mode_theme(mode: Mode) -> Vec<String> {
-    match mode {
+    fn theme(mode: Mode) -> Vec<String> {
+        match mode {
         Mode::Text => vec![
             "element { children: [element-text]; orientation: vertical; }".into(),
             "listview { layout: vertical; }".into(),
@@ -96,11 +174,12 @@ pub fn mode_theme(mode: Mode) -> Vec<String> {
             "listview { layout: vertical; lines: 3; columns: 3; fixed-height: true; fixed-columns: true; }".into(),
         ],
     }
-}
+    }
 
-pub fn mode_title(mode: Mode) -> String {
-    match mode {
-        Mode::Text => "Texts".into(),
-        Mode::Image => "Images".into(),
+    fn title(mode: Mode) -> String {
+        match mode {
+            Mode::Text => "Texts".into(),
+            Mode::Image => "Images".into(),
+        }
     }
 }
