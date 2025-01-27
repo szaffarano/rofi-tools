@@ -1,10 +1,9 @@
 # Rofi Tools
 
-![GitHub Release](https://img.shields.io/github/v/release/szaffarano/rofi-tools?sort=date)
-![GitHub License](https://img.shields.io/github/license/szaffarano/rofi-tools)
-![CI](https://github.com/szaffarano/rofi-tools/actions/workflows/ci.yml/badge.svg)
-![Release](https://github.com/szaffarano/rofi-tools/actions/workflows/release.yml/badge.svg)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+![GitHub Release](https://img.shields.io/github/v/release/szaffarano/rofi-tools?sort=date&style=flat-square)
+![GitHub License](https://img.shields.io/github/license/szaffarano/rofi-tools?style=flat-square)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&style=flat-square)](https://github.com/pre-commit/pre-commit)
+![NixOS](https://img.shields.io/badge/NixOS-5277C3?logo=nixos&logoColor=fff&style=flat-square)
 
 Note: Only tested with [rofi-wayland](https://github.com/lbonn/rofi), although
 it should work with the [official version](https://github.com/davatorium/rofi).
