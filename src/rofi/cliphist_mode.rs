@@ -2,6 +2,7 @@ use crate::{
     cache::{CacheEntry, SimpleCache},
     clipboard::Clipboard,
     cliphist::{ClipHist, ClipHistEntry},
+    config,
     rofi::{self, RofiEntry},
 };
 
@@ -33,12 +34,17 @@ impl ClipHistMode {
         cache: SimpleCache,
         cliphist: ClipHist,
         clipboard: Clipboard,
+        text_mode: config::ModeConfig,
+        image_mode: config::ModeConfig,
+        delete_mode: config::ModeConfig,
     ) -> Self {
         let (txt, img): (Vec<_>, Vec<_>) = cliphist
             .list()
             .into_iter()
             .partition(|e| matches!(e, ClipHistEntry::Text { .. }));
 
+        let delete_shortcut = &delete_mode.shortcut;
+        let delete_description = &delete_mode.description;
         Self {
             rofi,
             cache,
@@ -50,8 +56,8 @@ impl ClipHistMode {
                     Self::title(Mode::Text),
                     "",
                     [
-                        KbCustom::new(1, "Alt+i", "Switch to images"),
-                        KbCustom::new(3, "Alt+d", "Delete entry"),
+                        KbCustom::new(1, image_mode.shortcut, image_mode.description),
+                        KbCustom::new(3, delete_shortcut, delete_description),
                     ],
                     Self::theme(Mode::Text),
                 ),
@@ -62,8 +68,8 @@ impl ClipHistMode {
                     Self::title(Mode::Image),
                     "",
                     [
-                        KbCustom::new(2, "Alt+t", "Switch to texts"),
-                        KbCustom::new(3, "Alt+d", "Delete entry"),
+                        KbCustom::new(2, text_mode.shortcut, text_mode.description),
+                        KbCustom::new(3, delete_shortcut, delete_description),
                     ],
                     Self::theme(Mode::Image),
                 ),

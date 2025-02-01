@@ -1,10 +1,9 @@
 # Rofi Tools
 
-![GitHub Release](https://img.shields.io/github/v/release/szaffarano/rofi-tools?sort=date)
-![GitHub License](https://img.shields.io/github/license/szaffarano/rofi-tools)
-![CI](https://github.com/szaffarano/rofi-tools/actions/workflows/ci.yml/badge.svg)
-![Release](https://github.com/szaffarano/rofi-tools/actions/workflows/release.yml/badge.svg)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+![GitHub Release](https://img.shields.io/github/v/release/szaffarano/rofi-tools?sort=date&style=flat-square)
+![GitHub License](https://img.shields.io/github/license/szaffarano/rofi-tools?style=flat-square)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&style=flat-square)](https://github.com/pre-commit/pre-commit)
+![NixOS](https://img.shields.io/badge/NixOS-5277C3?logo=nixos&logoColor=fff&style=flat-square)
 
 Note: Only tested with [rofi-wayland](https://github.com/lbonn/rofi), although
 it should work with the [official version](https://github.com/davatorium/rofi).
@@ -62,3 +61,49 @@ text/image mode by using `Alt-t` / `Alt-i` and also delete entries using
 ![Text Mode](./img/text-mode.png)
 
 ![Image Mode](./img/img-mode.png)
+
+### Configuration
+
+- Through the command line:
+
+```bash
+Usage: rofi-cliphist [OPTIONS]
+
+Options:
+  -v, --verbose                          Show verbose output
+  -r, --rofi-path <ROFI_PATH>            Path to rofi executable [default: rofi]
+  -c, --cliphist-path <CLIPHIST_PATH>    Path to cliphist executable [default: cliphist]
+  -w, --clipboard-path <CLIPBOARD_PATH>  Path to wl-copy executable [default: wl-copy]
+  -f, --config <FILE>                    Sets a custom config file
+  -h, --help                             Print help
+  -V, --version                          Print version
+```
+
+- Through a configuration file, either on `$XDG_CONFIG_HOME/rofi-cliphist.toml`
+or the path specified using the `-f/--config` flag
+
+```toml
+[rofi]
+path = "rofi"
+
+[cliphist]
+path = "cliphist"
+
+[clipboard]
+path = "wl-copy"
+
+[text_mode_config]
+title = "Text"
+shortcut = "Alt+t"
+description = "Switch to text mode"
+
+[image_mode_config]
+title = "Image"
+shortcut = "Alt+i"
+description = "Switch to image mode!"
+
+[delete_mode_config]
+title = "Delete"
+shortcut = "Alt+d"
+description = "Delete entry"
+```
