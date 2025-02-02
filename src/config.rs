@@ -68,7 +68,7 @@ impl Default for Config {
             },
             text_mode_config: ModeConfig {
                 title: "Texts".to_string(),
-                shortcut: "Alt+d".to_string(),
+                shortcut: "Alt+t".to_string(),
                 description: "Switch to text".to_string(),
             },
             delete_mode_config: ModeConfig {
