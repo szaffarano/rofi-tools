@@ -1,5 +1,8 @@
 use std::io::Write;
 
+use anyhow::{bail, Context};
+use log::trace;
+
 pub struct Clipboard {
     bin: String,
 }
@@ -9,20 +12,25 @@ pub fn new(bin: impl Into<String>) -> Clipboard {
 }
 
 impl Clipboard {
-    pub fn copy(&self, content: Vec<u8>) {
+    pub fn copy(&self, content: Vec<u8>) -> anyhow::Result<()> {
+        trace!("Copying to clipboard");
+
         let mut child = std::process::Command::new(&self.bin)
             .stdin(std::process::Stdio::piped())
             .spawn()
-            .expect("Error executing clipboard");
+            .context("Error executing clipboard")?;
+
         child
             .stdin
             .as_mut()
-            .expect("Failed to open stdin")
+            .context("Failed to open stdin")?
             .write_all(&content)
-            .unwrap();
-        let status = child.wait().expect("Error executing clipboard");
+            .context("Failed to write to stdin")?;
+
+        let status = child.wait().context("Error executing clipboard")?;
         if !status.success() {
-            panic!("Error executing clipboard");
+            bail!("Error executing clipboard");
         }
+        Ok(())
     }
 }
