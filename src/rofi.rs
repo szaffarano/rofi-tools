@@ -4,16 +4,26 @@ use std::{
     process::{Command, Stdio},
 };
 
+use anyhow::Context;
+use log::trace;
+
 use crate::{cache, cliphist::ClipHistEntry};
 
 pub mod cliphist_mode;
 
+/// Entry to be displayed in rofi
+///
+/// Id is a unique identifier for the entry when selected.
+/// Label is the text to be displayed.
+/// Icon is an optional icon to be displayed, either a path to a filesystem image o a supported
+/// pango icon name.
 pub trait RofiEntry {
     fn id(&self) -> String;
     fn label(&self) -> String;
     fn icon(&self) -> Option<String>;
 }
 
+/// Possible result of a rofi execution
 pub enum RofiResult {
     Cancel,
     Empty,
@@ -22,10 +32,12 @@ pub enum RofiResult {
     Signal { key: i32 }, // just to capture OS signals, not sure whether it's useful
 }
 
+/// API to interact with rofi using command execution.
 pub struct Rofi {
     pub bin: String,
 }
 
+/// Options to configure rofi when spawning it.
 pub struct RofiOptions {
     format: Option<String>, // not expose format to foce using "i"
     pub case_insensitive: bool,
@@ -38,6 +50,7 @@ pub struct RofiOptions {
     pub theme_str: Vec<String>,
 }
 
+/// Custom keyboard shortcuts for rofi.
 pub struct KbCustom {
     key: i32,
     shortcut: String,
@@ -46,6 +59,7 @@ pub struct KbCustom {
 
 impl Default for RofiOptions {
     fn default() -> Self {
+        trace!("Creating default RofiOptions");
         RofiOptions {
             case_insensitive: true,
             custom_kbs: vec![],
@@ -72,6 +86,7 @@ impl RofiOptions {
         S: Into<String>,
         K: IntoIterator<Item = KbCustom>,
     {
+        trace!("Creating RofiOptions");
         RofiOptions {
             mesg: Some(mesg.into()),
             prompt: Some(prompt.into()),
@@ -84,6 +99,7 @@ impl RofiOptions {
 
 impl KbCustom {
     pub fn new(key: i32, shortcut: impl Into<String>, description: impl Into<String>) -> Self {
+        trace!("Creating KbCustom");
         KbCustom {
             key,
             shortcut: shortcut.into(),
@@ -146,14 +162,14 @@ impl Rofi {
         entries: &[&dyn RofiEntry],
         options: &RofiOptions,
         cache: &cache::SimpleCache,
-    ) -> RofiResult {
+    ) -> anyhow::Result<RofiResult> {
         let options = if entries.is_empty() {
             let base_msg = "No clipboard entries to show".into();
             let error_msg = options
                 .prompt
                 .as_ref()
                 .map(|p| format!("<b>{p}</b>: {base_msg}"))
-                .unwrap_or(base_msg);
+                .unwrap_or_else(|| base_msg);
             vec!["-e".into(), error_msg, "-markup".into()]
         } else {
             options.into()
@@ -165,7 +181,7 @@ impl Rofi {
             .stderr(Stdio::piped())
             .args(options)
             .spawn()
-            .expect("Error executing rofi");
+            .context("Error executing rofi")?;
 
         if let Some(mut writer) = process.stdin.take() {
             for entry in entries {
@@ -175,7 +191,8 @@ impl Rofi {
                     let cached = cache.path(icon);
                     if cached.exists() {
                         str.extend_from_slice(
-                            format!("\0icon\x1f{}", cached.to_str().unwrap()).as_bytes(),
+                            format!("\0icon\x1f{}", cached.to_str().context("resolving icon")?)
+                                .as_bytes(),
                         );
                     } else {
                         str.extend_from_slice(format!("\0icon\x1f{}", icon).as_bytes());
@@ -184,28 +201,28 @@ impl Rofi {
                 str.push(b'\n');
                 writer
                     .write_all(&str)
-                    .expect("writing entries to rofi through stdin");
+                    .context("writing entries to rofi through stdin")?;
             }
         }
 
-        let status = process.wait().expect("waiting rofi's execution");
+        let status = process.wait().context("waiting rofi's execution")?;
 
         let mut buffer = String::new();
         if let Some(mut reader) = process.stdout.take() {
             reader
                 .read_to_string(&mut buffer)
-                .expect("reading rofi's output");
+                .context("reading rofi's output")?;
         }
         if buffer.ends_with('\n') {
             buffer.pop();
         }
 
-        if status.success() {
+        let result = if status.success() {
             if buffer.is_empty() {
                 RofiResult::Empty
             } else {
                 RofiResult::Selection {
-                    id: buffer.parse::<usize>().unwrap(),
+                    id: buffer.parse::<usize>().context("parsing usize")?,
                 }
             }
         } else if let Some(code) = status.code() {
@@ -214,7 +231,7 @@ impl Rofi {
             } else {
                 RofiResult::Keyboard {
                     key: code,
-                    id: buffer.parse::<usize>().unwrap(),
+                    id: buffer.parse::<usize>().context("parsing usize")?,
                 }
             }
         } else if let Some(code) = status.signal() {
@@ -223,7 +240,9 @@ impl Rofi {
             RofiResult::Signal { key: code }
         } else {
             panic!("Rofi exited unexpectedly");
-        }
+        };
+
+        Ok(result)
     }
 }
 

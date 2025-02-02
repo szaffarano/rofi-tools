@@ -1,3 +1,6 @@
+use anyhow::{bail, Context};
+use log::{debug, trace};
+
 use crate::{
     cache::{CacheEntry, SimpleCache},
     clipboard::Clipboard,
@@ -8,11 +11,15 @@ use crate::{
 
 use super::{KbCustom, Rofi, RofiOptions, RofiResult};
 
+/// Current mode to display
+#[derive(Debug)]
 enum Mode {
     Text,
     Image,
 }
 
+/// A rofi "mode" to display the clipboard history
+/// It keeps an internal state and spawns rofi to display the entries
 pub struct ClipHistMode {
     rofi: Rofi,
     cache: SimpleCache,
@@ -29,6 +36,7 @@ struct RofiState {
 }
 
 impl ClipHistMode {
+    /// Create a new instance of ClipHistMode
     pub fn new(
         rofi: rofi::Rofi,
         cache: SimpleCache,
@@ -37,15 +45,18 @@ impl ClipHistMode {
         text_mode: config::ModeConfig,
         image_mode: config::ModeConfig,
         delete_mode: config::ModeConfig,
-    ) -> Self {
+    ) -> anyhow::Result<Self> {
+        trace!("Creating ClipHistMode");
+
         let (txt, img): (Vec<_>, Vec<_>) = cliphist
             .list()
+            .context("Error listing cliphist")?
             .into_iter()
             .partition(|e| matches!(e, ClipHistEntry::Text { .. }));
 
         let delete_shortcut = &delete_mode.shortcut;
         let delete_description = &delete_mode.description;
-        Self {
+        let instance = Self {
             rofi,
             cache,
             cliphist,
@@ -75,12 +86,17 @@ impl ClipHistMode {
                 ),
             },
             mode: Mode::Text,
-        }
+        };
+
+        Ok(instance)
     }
 
-    pub fn run(&mut self) {
+    /// This is the "main loop" of the mode
+    pub fn run(&mut self) -> anyhow::Result<()> {
+        debug!("Running ClipHistMode");
+
         loop {
-            self.sync_cache();
+            self.sync_cache()?;
 
             let current = match self.mode {
                 Mode::Text => &mut self.txt,
@@ -93,14 +109,22 @@ impl ClipHistMode {
                 .map(|e| e as &dyn rofi::RofiEntry)
                 .collect::<Vec<_>>();
 
-            match self.rofi.run(&entries, &current.options, &self.cache) {
+            match self
+                .rofi
+                .run(&entries, &current.options, &self.cache)
+                .context("running rofi")?
+            {
                 RofiResult::Selection { id } => {
                     current.options.selected_row = id;
 
                     let entry = current.entries.get(id).expect("Invalid id");
                     let cliphist_id = RofiEntry::id(entry);
-                    self.clipboard.copy(self.cliphist.value_of(cliphist_id));
-                    break;
+                    self.clipboard.copy(
+                        self.cliphist
+                            .value_of(cliphist_id)
+                            .context("Error getting cliphist entry")?,
+                    )?;
+                    return Ok(());
                 }
                 RofiResult::Keyboard { key, id } => {
                     current.options.selected_row = id;
@@ -114,32 +138,34 @@ impl ClipHistMode {
                         }
                         12 => {
                             let entry = current.entries.remove(id);
-                            self.cliphist.remove(RofiEntry::id(&entry));
+                            self.cliphist.remove(RofiEntry::id(&entry))?;
                         }
-                        _ => panic!("Unexpected key: {}", key),
+                        _ => bail!("Unexpected key: {}", key),
                     }
                 }
                 RofiResult::Cancel => {
                     // just inform the user and exit
-                    println!("Cancelled");
-                    break;
+                    trace!("Cancelled");
+                    return Ok(());
                 }
                 RofiResult::Signal { key } => {
                     // just inform the user and exit
-                    println!("Signaled: {key}");
-                    break;
+                    trace!("Signaled: {key}");
+                    return Ok(());
                 }
                 RofiResult::Empty => {
                     // just inform the user and exit
-                    println!("Empty response");
-                    break;
+                    trace!("Empty response");
+                    return Ok(());
                 }
             }
         }
     }
 
-    fn sync_cache(&self) -> usize {
-        let entries = self.cliphist.list();
+    fn sync_cache(&self) -> anyhow::Result<usize> {
+        trace!("Syncing cache");
+
+        let entries = self.cliphist.list().context("Error listing cliphist")?;
 
         let entries = entries
             .iter()
@@ -154,7 +180,10 @@ impl ClipHistMode {
                     ClipHistEntry::Text { id, .. } => id,
                     ClipHistEntry::Image { id, .. } => id,
                 };
-                let value = self.cliphist.value_of(id.into());
+                let value = self
+                    .cliphist
+                    .value_of(id.into())
+                    .context("Error getting cliphist entry")?;
                 self.cache.add(*entry, value);
             }
         }
@@ -165,10 +194,12 @@ impl ClipHistMode {
             .map(|e| e.id())
             .collect::<Vec<_>>();
 
-        self.cache.prune(exclusions).expect("Error syncing cache")
+        self.cache.prune(exclusions).context("Error syncing cache")
     }
 
     fn theme(mode: Mode) -> Vec<String> {
+        trace!("Switching theme to {:?}", mode);
+
         match mode {
         Mode::Text => vec![
             "element { children: [element-text]; orientation: vertical; }".into(),
