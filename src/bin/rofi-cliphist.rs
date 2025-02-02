@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::bail;
 use clap::Parser;
-use log::{debug, Level};
+use log::{debug, info, Level};
 use roto::{
     cache, clipboard, cliphist, config,
     rofi::{self, cliphist_mode::ClipHistMode},
@@ -38,6 +38,7 @@ fn main() -> anyhow::Result<()> {
     simple_logger::init_with_level(args.verbose.log_level().unwrap_or(Level::Error))?;
 
     let mut cfg = if let Some(config_path) = &args.config {
+        info!("Using custom config file: {:?}", config_path);
         config::load(config_path).expect("Error loading config file")
     } else {
         match config::load_default() {
@@ -63,6 +64,8 @@ fn main() -> anyhow::Result<()> {
     let cache = cache::SimpleCache::new("rofi-cliphist/thumbs-new").expect("Error creating cache");
     let clipboard = clipboard::new(cfg.clipboard.path);
     let rofi = rofi::new(cfg.rofi.path);
+
+    debug!("Starting ClipHistMode");
 
     ClipHistMode::new(
         rofi,
