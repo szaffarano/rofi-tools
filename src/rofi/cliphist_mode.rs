@@ -109,7 +109,11 @@ impl ClipHistMode {
                 .map(|e| e as &dyn rofi::RofiEntry)
                 .collect::<Vec<_>>();
 
-            match self.rofi.run(&entries, &current.options, &self.cache) {
+            match self
+                .rofi
+                .run(&entries, &current.options, &self.cache)
+                .context("running rofi")?
+            {
                 RofiResult::Selection { id } => {
                     current.options.selected_row = id;
 
