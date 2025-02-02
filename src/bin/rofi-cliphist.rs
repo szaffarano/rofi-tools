@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
+use anyhow::bail;
 use clap::Parser;
+use log::debug;
 use roto::{
     cache, clipboard, cliphist, config,
     rofi::{self, cliphist_mode::ClipHistMode},
@@ -30,7 +32,9 @@ struct Args {
     config: Option<PathBuf>,
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
+    env_logger::init();
+
     let args = Args::parse();
 
     let mut cfg = if let Some(config_path) = &args.config {
@@ -41,13 +45,13 @@ fn main() {
             Err(e) => {
                 if let Some(io_err) = e.downcast_ref::<std::io::Error>() {
                     if io_err.kind() == std::io::ErrorKind::NotFound {
-                        println!("Config file not found, using default config");
+                        debug!("Config file not found, using default config");
                         config::Config::default()
                     } else {
-                        panic!("Error reading config: {:?}", e);
+                        bail!("Error reading config: {:?}", e);
                     }
                 } else {
-                    panic!("Unexpected error reading config: {:?}", e);
+                    bail!("Unexpected error reading config: {:?}", e);
                 }
             }
         }
@@ -68,8 +72,8 @@ fn main() {
         cfg.text_mode_config,
         cfg.image_mode_config,
         cfg.delete_mode_config,
-    )
-    .run();
+    )?
+    .run()
 }
 
 fn merge_args_into_config(cfg: &mut config::Config, args: Args) {
