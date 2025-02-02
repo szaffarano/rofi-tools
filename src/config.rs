@@ -1,9 +1,11 @@
 use anyhow::Context;
+use log::debug;
 use std::{fs, path::PathBuf};
 
 use directories_next::{self, BaseDirs};
 use serde::{Deserialize, Serialize};
 
+/// CLI configuration
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     #[serde(default)]
@@ -42,12 +44,17 @@ pub struct ModeConfig {
     pub description: String,
 }
 
+/// Load configuration from a file
 pub fn load(path: &PathBuf) -> anyhow::Result<Config> {
+    debug!("Loading config from file: {:?}", path);
+
     let config = fs::read_to_string(path).context("Error reading config file")?;
     toml::from_str(&config).context("Error parsing config file")
 }
 
+/// Load the default configuration
 pub fn load_default() -> anyhow::Result<Config> {
+    debug!("Loading config from the default location");
     let dirs = BaseDirs::new().expect("Error getting base directories");
 
     let config_path = dirs.config_dir().join("rofi-cliphist.toml");
@@ -57,6 +64,7 @@ pub fn load_default() -> anyhow::Result<Config> {
 
 impl Default for Config {
     fn default() -> Self {
+        debug!("Creating default config");
         Self {
             rofi: Rofi::default(),
             cliphist: ClipHist::default(),
