@@ -14,8 +14,10 @@ categories = ["command-line-utilities"]
 [dependencies]
 anyhow = "1.0.95"
 clap = { version = "4.5.27", features = ["derive"] }
+clap-verbosity-flag = "3.0.2"
 directories-next = "2.0.0"
-indoc = "2.0.5"
+log = "0.4.25"
 regex = "1.11.1"
 serde = { version = "1.0.217", features = ["derive"] }
+simple_logger = "5.0.0"
 toml = "0.8.19"

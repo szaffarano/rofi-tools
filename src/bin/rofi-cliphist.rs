@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::bail;
 use clap::Parser;
-use log::debug;
+use log::{debug, Level};
 use roto::{
     cache, clipboard, cliphist, config,
     rofi::{self, cliphist_mode::ClipHistMode},
@@ -12,8 +12,8 @@ use roto::{
 #[command(version, about, long_about = None)]
 struct Args {
     /// Show verbose output
-    #[clap(short, long)]
-    verbose: bool,
+    #[command(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
 
     /// Path to rofi executable
     #[clap(short, long, default_value = "rofi")]
@@ -33,9 +33,9 @@ struct Args {
 }
 
 fn main() -> anyhow::Result<()> {
-    env_logger::init();
-
     let args = Args::parse();
+
+    simple_logger::init_with_level(args.verbose.log_level().unwrap_or(Level::Error))?;
 
     let mut cfg = if let Some(config_path) = &args.config {
         config::load(config_path).expect("Error loading config file")
