@@ -1,5 +1,6 @@
 use anyhow::Context;
 use directories_next::{self, BaseDirs};
+use log::{debug, trace};
 use std::{
     fs::{self, DirEntry},
     io::Error,
@@ -19,6 +20,8 @@ impl SimpleCache {
     /// Create a new SimpleCache instance on $XDG_CACHE_DIR/hierarchy.
     /// Where `whierarchy` is a valid unix-like path.
     pub fn new(hierarchy: &str) -> anyhow::Result<Self> {
+        trace!("Creating cache directory for hierarchy: {}", hierarchy);
+
         Ok(Self {
             cache_dir: Self::init_cache_dir(hierarchy)?,
         })
@@ -26,6 +29,8 @@ impl SimpleCache {
 
     /// Prune the cache directory, removing all files that are not in the `excludes` list.
     pub fn prune(&self, excludes: Vec<String>) -> anyhow::Result<usize> {
+        trace!("Pruning cache directory, excluding: {:?}", excludes);
+
         let to_delete = fs::read_dir(&self.cache_dir)
             .context(format!("Error reading cache folder: {:?}", self.cache_dir))?
             .filter(|p| {
@@ -42,6 +47,7 @@ impl SimpleCache {
             .collect::<Result<Vec<DirEntry>, Error>>()
             .context("Error collecting entries to delete")?;
 
+        debug!("Deleting {} entries from cache.", to_delete.len());
         let deleted = to_delete
             .iter()
             .inspect(|entry| {
@@ -54,6 +60,7 @@ impl SimpleCache {
 
     /// Add a file to the cache directory.
     pub fn add(&self, entry: &dyn CacheEntry, value: Vec<u8>) {
+        trace!("Adding entry to cache: {:?}", entry.id());
         let path = self.path(entry.id().as_str());
         fs::write(&path, value).unwrap();
     }
@@ -70,6 +77,7 @@ impl SimpleCache {
 
     /// Initialize the cache directory, creating the folders if they don't exist.
     fn init_cache_dir(hierarchy: &str) -> anyhow::Result<PathBuf> {
+        trace!("Initializing cache directory for hierarchy: {}", hierarchy);
         let dirs =
             BaseDirs::new().ok_or_else(|| anyhow::anyhow!("Error getting base directories"))?;
 
