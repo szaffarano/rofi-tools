@@ -56,7 +56,7 @@ path/to/cliphist-rofi
 
 It will show by default all non-binary cliphist entries. You can switch between
 text/image mode by using `Alt-t` / `Alt-i` and also delete entries using
-`Alt-d`.
+`Alt-d`, `Alt-p` (delete previous) and `Alt-n` (delete next).
 
 ![Text Mode](./img/text-mode.png)
 
@@ -106,4 +106,14 @@ description = "Switch to image mode!"
 title = "Delete"
 shortcut = "Alt+d"
 description = "Delete entry"
+
+[delete_previous_config]
+title = "Delete previous"
+shortcut = "Alt+p"
+description = "Delete all entries before the selected one"
+
+[delete_next_config]
+title = "Delete next"
+shortcut = "Alt+n"
+description = "Delete all entries after the selected one"
 ```

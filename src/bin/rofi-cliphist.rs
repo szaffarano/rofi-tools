@@ -75,6 +75,8 @@ fn main() -> anyhow::Result<()> {
         cfg.text_mode_config,
         cfg.image_mode_config,
         cfg.delete_mode_config,
+        cfg.delete_previous_config,
+        cfg.delete_next_config,
     )?
     .run()
 }

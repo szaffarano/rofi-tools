@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::Context;
-use log::trace;
+use log::{debug, trace};
 
 use crate::{cache, cliphist::ClipHistEntry};
 
@@ -179,9 +179,11 @@ impl Rofi {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
-            .args(options)
+            .args(&options)
             .spawn()
             .context("Error executing rofi")?;
+
+        debug!("Executing rofi with command: {:?} {:?}", &self.bin, &options);
 
         if let Some(mut writer) = process.stdin.take() {
             for entry in entries {

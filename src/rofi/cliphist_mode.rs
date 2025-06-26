@@ -45,6 +45,8 @@ impl ClipHistMode {
         text_mode: config::ModeConfig,
         image_mode: config::ModeConfig,
         delete_mode: config::ModeConfig,
+        delete_previous_mode: config::ModeConfig,
+        delete_next_mode: config::ModeConfig,
     ) -> anyhow::Result<Self> {
         trace!("Creating ClipHistMode");
 
@@ -69,6 +71,8 @@ impl ClipHistMode {
                     [
                         KbCustom::new(1, image_mode.shortcut, image_mode.description),
                         KbCustom::new(3, delete_shortcut, delete_description),
+                        KbCustom::new(4, &delete_previous_mode.shortcut, &delete_previous_mode.description),
+                        KbCustom::new(5, &delete_next_mode.shortcut, &delete_next_mode.description),
                     ],
                     Self::theme(Mode::Text),
                 ),
@@ -81,6 +85,8 @@ impl ClipHistMode {
                     [
                         KbCustom::new(2, text_mode.shortcut, text_mode.description),
                         KbCustom::new(3, delete_shortcut, delete_description),
+                        KbCustom::new(4, &delete_previous_mode.shortcut, &delete_previous_mode.description),
+                        KbCustom::new(5, &delete_next_mode.shortcut, &delete_next_mode.description),
                     ],
                     Self::theme(Mode::Image),
                 ),
@@ -139,6 +145,18 @@ impl ClipHistMode {
                         12 => {
                             let entry = current.entries.remove(id);
                             self.cliphist.remove(RofiEntry::id(&entry))?;
+                        }
+                        13 => {
+                            let entries_to_delete = current.entries.drain(..id).collect::<Vec<_>>();
+                            for entry in entries_to_delete {
+                                self.cliphist.remove(RofiEntry::id(&entry))?;
+                            }
+                        }
+                        14 => {
+                            let entries_to_delete = current.entries.drain(id + 1..).collect::<Vec<_>>();
+                            for entry in entries_to_delete {
+                                self.cliphist.remove(RofiEntry::id(&entry))?;
+                            }
                         }
                         _ => bail!("Unexpected key: {}", key),
                     }
