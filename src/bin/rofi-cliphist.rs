@@ -38,7 +38,7 @@ fn main() -> anyhow::Result<()> {
     simple_logger::init_with_level(args.verbose.log_level().unwrap_or(Level::Error))?;
 
     let mut cfg = if let Some(config_path) = &args.config {
-        info!("Using custom config file: {:?}", config_path);
+        info!("Using custom config file: {config_path:?}");
         config::load(config_path).expect("Error loading config file")
     } else {
         match config::load_default() {
