@@ -18,6 +18,15 @@ enum Mode {
     Image,
 }
 
+/// Configuration for the ClipHistMode
+pub struct ClipHistModeConfig {
+    pub text_mode: config::ModeConfig,
+    pub image_mode: config::ModeConfig,
+    pub delete_mode: config::ModeConfig,
+    pub delete_previous_mode: config::ModeConfig,
+    pub delete_next_mode: config::ModeConfig,
+}
+
 /// A rofi "mode" to display the clipboard history
 /// It keeps an internal state and spawns rofi to display the entries
 pub struct ClipHistMode {
@@ -42,9 +51,7 @@ impl ClipHistMode {
         cache: SimpleCache,
         cliphist: ClipHist,
         clipboard: Clipboard,
-        text_mode: config::ModeConfig,
-        image_mode: config::ModeConfig,
-        delete_mode: config::ModeConfig,
+        config: ClipHistModeConfig,
     ) -> anyhow::Result<Self> {
         trace!("Creating ClipHistMode");
 
@@ -54,8 +61,8 @@ impl ClipHistMode {
             .into_iter()
             .partition(|e| matches!(e, ClipHistEntry::Text { .. }));
 
-        let delete_shortcut = &delete_mode.shortcut;
-        let delete_description = &delete_mode.description;
+        let delete_shortcut = &config.delete_mode.shortcut;
+        let delete_description = &config.delete_mode.description;
         let instance = Self {
             rofi,
             cache,
@@ -67,8 +74,18 @@ impl ClipHistMode {
                     Self::title(Mode::Text),
                     "",
                     [
-                        KbCustom::new(1, image_mode.shortcut, image_mode.description),
+                        KbCustom::new(1, config.image_mode.shortcut, config.image_mode.description),
                         KbCustom::new(3, delete_shortcut, delete_description),
+                        KbCustom::new(
+                            4,
+                            &config.delete_previous_mode.shortcut,
+                            config.delete_previous_mode.description.clone(),
+                        ),
+                        KbCustom::new(
+                            5,
+                            &config.delete_next_mode.shortcut,
+                            config.delete_next_mode.description.clone(),
+                        ),
                     ],
                     Self::theme(Mode::Text),
                 ),
@@ -79,8 +96,18 @@ impl ClipHistMode {
                     Self::title(Mode::Image),
                     "",
                     [
-                        KbCustom::new(2, text_mode.shortcut, text_mode.description),
+                        KbCustom::new(2, config.text_mode.shortcut, config.text_mode.description),
                         KbCustom::new(3, delete_shortcut, delete_description),
+                        KbCustom::new(
+                            4,
+                            &config.delete_previous_mode.shortcut,
+                            config.delete_previous_mode.description.clone(),
+                        ),
+                        KbCustom::new(
+                            5,
+                            &config.delete_next_mode.shortcut,
+                            config.delete_next_mode.description.clone(),
+                        ),
                     ],
                     Self::theme(Mode::Image),
                 ),
@@ -140,6 +167,19 @@ impl ClipHistMode {
                             let entry = current.entries.remove(id);
                             self.cliphist.remove(RofiEntry::id(&entry))?;
                         }
+                        13 => {
+                            let entries_to_delete = current.entries.drain(..id).collect::<Vec<_>>();
+                            for entry in entries_to_delete {
+                                self.cliphist.remove(RofiEntry::id(&entry))?;
+                            }
+                        }
+                        14 => {
+                            let entries_to_delete =
+                                current.entries.drain(id + 1..).collect::<Vec<_>>();
+                            for entry in entries_to_delete {
+                                self.cliphist.remove(RofiEntry::id(&entry))?;
+                            }
+                        }
                         _ => bail!("Unexpected key: {}", key),
                     }
                 }
@@ -198,7 +238,7 @@ impl ClipHistMode {
     }
 
     fn theme(mode: Mode) -> Vec<String> {
-        trace!("Switching theme to {:?}", mode);
+        trace!("Switching theme to {mode:?}");
 
         match mode {
         Mode::Text => vec![

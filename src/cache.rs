@@ -20,7 +20,7 @@ impl SimpleCache {
     /// Create a new SimpleCache instance on $XDG_CACHE_DIR/hierarchy.
     /// Where `whierarchy` is a valid unix-like path.
     pub fn new(hierarchy: &str) -> anyhow::Result<Self> {
-        trace!("Creating cache directory for hierarchy: {}", hierarchy);
+        trace!("Creating cache directory for hierarchy: {hierarchy}");
 
         Ok(Self {
             cache_dir: Self::init_cache_dir(hierarchy)?,
@@ -29,7 +29,7 @@ impl SimpleCache {
 
     /// Prune the cache directory, removing all files that are not in the `excludes` list.
     pub fn prune(&self, excludes: Vec<String>) -> anyhow::Result<usize> {
-        trace!("Pruning cache directory, excluding: {:?}", excludes);
+        trace!("Pruning cache directory, excluding: {excludes:?}");
 
         let to_delete = fs::read_dir(&self.cache_dir)
             .context(format!("Error reading cache folder: {:?}", self.cache_dir))?
@@ -77,7 +77,7 @@ impl SimpleCache {
 
     /// Initialize the cache directory, creating the folders if they don't exist.
     fn init_cache_dir(hierarchy: &str) -> anyhow::Result<PathBuf> {
-        trace!("Initializing cache directory for hierarchy: {}", hierarchy);
+        trace!("Initializing cache directory for hierarchy: {hierarchy}");
         let dirs =
             BaseDirs::new().ok_or_else(|| anyhow::anyhow!("Error getting base directories"))?;
 
@@ -87,7 +87,7 @@ impl SimpleCache {
 
         if let Ok(false) = fs::exists(cache_dir) {
             fs::create_dir_all(cache_dir)
-                .context(format!("Error creating cache folder: {:?}", cache_dir))?;
+                .context(format!("Error creating cache folder: {cache_dir:?}"))?;
         }
 
         Ok(cache_dir.to_path_buf())
