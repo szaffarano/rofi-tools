@@ -65,7 +65,7 @@ impl ClipHist {
 
     /// Remove an entry from the clipboard history.
     pub fn remove(&self, id: String) -> anyhow::Result<()> {
-        debug!("About to remove entry with id: {}", id);
+        debug!("About to remove entry with id: {id}");
         let mut child = Command::new(&self.bin)
             .arg("delete")
             .stdin(Stdio::piped())
@@ -87,14 +87,14 @@ impl ClipHist {
             bail!("Error executing cliphist");
         }
 
-        debug!("Successfully removed entry with id: {}", id);
+        debug!("Successfully removed entry with id: {id}");
 
         Ok(())
     }
 
     /// Get the value of a given entry in the clipboard history.
     pub fn value_of(&self, id: String) -> anyhow::Result<Vec<u8>> {
-        trace!("Getting value of entry with id: {}", id);
+        trace!("Getting value of entry with id: {id}");
 
         let value = Command::new(&self.bin)
             .arg("decode")
@@ -147,7 +147,7 @@ impl CacheEntry for ClipHistEntry {
     fn id(&self) -> String {
         match self {
             ClipHistEntry::Text { id, .. } => id.to_string(),
-            ClipHistEntry::Image { id, content_type } => format!("{}.{}", id, content_type),
+            ClipHistEntry::Image { id, content_type } => format!("{id}.{content_type}"),
         }
     }
 }

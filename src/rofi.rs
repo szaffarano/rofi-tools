@@ -127,7 +127,7 @@ impl From<&RofiOptions> for Vec<String> {
             options.push(format.into());
         }
         for KbCustom { key, shortcut, .. } in &val.custom_kbs {
-            options.push(format!("-kb-custom-{}", key));
+            options.push(format!("-kb-custom-{key}"));
             options.push(shortcut.into());
         }
         if !&val.custom_kbs.is_empty() {
@@ -200,7 +200,7 @@ impl Rofi {
                                 .as_bytes(),
                         );
                     } else {
-                        str.extend_from_slice(format!("\0icon\x1f{}", icon).as_bytes());
+                        str.extend_from_slice(format!("\0icon\x1f{icon}").as_bytes());
                     }
                 }
                 str.push(b'\n');
@@ -261,14 +261,14 @@ impl RofiEntry for ClipHistEntry {
     fn icon(&self) -> Option<String> {
         match self {
             ClipHistEntry::Text { .. } => None,
-            ClipHistEntry::Image { id, content_type } => Some(format!("{}.{}", id, content_type)),
+            ClipHistEntry::Image { id, content_type } => Some(format!("{id}.{content_type}")),
         }
     }
     fn label(&self) -> String {
         match self {
             ClipHistEntry::Text { title, .. } => title.into(),
             ClipHistEntry::Image { id, content_type } => {
-                format!("{}.{}", id, content_type)
+                format!("{id}.{content_type}")
             }
         }
     }

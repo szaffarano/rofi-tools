@@ -50,7 +50,7 @@ pub struct ModeConfig {
 
 /// Load configuration from a file
 pub fn load(path: &PathBuf) -> anyhow::Result<Config> {
-    debug!("Loading config from file: {:?}", path);
+    debug!("Loading config from file: {path:?}");
 
     let config = fs::read_to_string(path).context("Error reading config file")?;
     toml::from_str(&config).context("Error parsing config file")

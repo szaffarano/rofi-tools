@@ -238,7 +238,7 @@ impl ClipHistMode {
     }
 
     fn theme(mode: Mode) -> Vec<String> {
-        trace!("Switching theme to {:?}", mode);
+        trace!("Switching theme to {mode:?}");
 
         match mode {
         Mode::Text => vec![
