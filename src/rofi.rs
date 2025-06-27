@@ -183,7 +183,10 @@ impl Rofi {
             .spawn()
             .context("Error executing rofi")?;
 
-        debug!("Executing rofi with command: {:?} {:?}", &self.bin, &options);
+        debug!(
+            "Executing rofi with command: {:?} {:?}",
+            &self.bin, &options
+        );
 
         if let Some(mut writer) = process.stdin.take() {
             for entry in entries {

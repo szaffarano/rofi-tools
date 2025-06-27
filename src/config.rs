@@ -24,7 +24,6 @@ pub struct Config {
     pub delete_previous_config: ModeConfig,
     #[serde(default = "default_delete_next_config")]
     pub delete_next_config: ModeConfig,
-    
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -158,5 +157,3 @@ fn default_delete_next_config() -> ModeConfig {
         description: "Delete all entries after the selected one".to_string(),
     }
 }
-
-

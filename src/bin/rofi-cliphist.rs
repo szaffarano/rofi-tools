@@ -72,11 +72,13 @@ fn main() -> anyhow::Result<()> {
         cache,
         cliphist,
         clipboard,
-        cfg.text_mode_config,
-        cfg.image_mode_config,
-        cfg.delete_mode_config,
-        cfg.delete_previous_config,
-        cfg.delete_next_config,
+        rofi::cliphist_mode::ClipHistModeConfig {
+            text_mode: cfg.text_mode_config,
+            image_mode: cfg.image_mode_config,
+            delete_mode: cfg.delete_mode_config,
+            delete_previous_mode: cfg.delete_previous_config,
+            delete_next_mode: cfg.delete_next_config,
+        },
     )?
     .run()
 }
