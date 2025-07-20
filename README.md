@@ -8,6 +8,84 @@
 Note: Only tested with [rofi-wayland](https://github.com/lbonn/rofi), although
 it should work with the [official version](https://github.com/davatorium/rofi).
 
+## Installation
+
+### Nix
+
+#### Option 1: Using flakes (recommended)
+
+If you have flakes enabled:
+
+```bash
+# Install directly
+nix profile install github:szaffarano/rofi-tools
+
+# Or run without installing
+nix run github:szaffarano/rofi-tools
+```
+
+#### Option 2: Add to your NixOS configuration
+
+Add to your `configuration.nix`:
+
+```nix
+{
+  inputs.rofi-tools.url = "github:szaffarano/rofi-tools";
+
+  outputs = { nixpkgs, rofi-tools, ... }: {
+    # Your existing config...
+
+    environment.systemPackages = with pkgs; [
+      # Your other packages...
+      rofi-tools.packages.${system}.default
+    ];
+  };
+}
+```
+
+### Arch Linux
+
+You can install this project using an [unofficial AUR
+package](https://aur.archlinux.org/packages/rofi-tools-bin) (Thanks
+[@a-priestley](https://github.com/a-priestley)):
+
+```bash
+yay -S rofi-tools
+```
+
+Alternatively, you can build from the AUR manually:
+
+```bash
+git clone https://aur.archlinux.org/rofi-tools-bin.git
+cd rofi-tools-bin
+makepkg -si
+```
+
+### Build from Source
+
+If your distribution isn't listed above, you can build from source:
+
+```bash
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+# Clone the repository
+git clone https://github.com/szaffarano/rofi-tools.git
+cd rofi-tools
+
+# Build and install
+cargo install --path .
+```
+
+Requirements:
+
+- Rust 1.70 or newer
+- [rofi](https://github.com/davatorium/rofi) or
+  [rofi-wayland](https://github.com/lbonn/rofi) installed on your system
+- [wl-clipboard](https://github.com/bugaevc/wl-clipboard)
+- [cliphist](https://github.com/sentriz/cliphist)
+
 ## Cliphist integration
 
 A WIP integration with `cliphist` to show both text and images in a Rofi menu.
@@ -17,7 +95,7 @@ Requires [wl-clipboard](https://github.com/bugaevc/wl-clipboard) and of course
 Since I wanted to use different layouts/rofi configurations for texts and
 images, neither the `script` mode nor a custom mode/plugin were valid options
 because it's impossible to dynamically update the layout without re-launching
-Rofi (more info [here](https://github.com/davatorium/rofi/issues/1356)).
+Rofi (more [info here](https://github.com/davatorium/rofi/issues/1356)).
 
 ### Usage
 
@@ -30,7 +108,7 @@ It's also exposed as a Nix flake. Add the input to your `flake.nix`
 ```nix
 {
   inputs = {
-    wofi-tools = {
+    rofi-tools = {
       url = "github:szaffarano/rofi-tools";
       inputs = {
         nixpkgs.follows = "nixpkgs";
@@ -51,7 +129,7 @@ home.packages = [
 And finally call it
 
 ```bash
-path/to/cliphist-rofi
+rofi-cliphist
 ```
 
 It will show by default all non-binary cliphist entries. You can switch between
