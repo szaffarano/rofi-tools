@@ -85,6 +85,7 @@ Requirements:
   [rofi-wayland](https://github.com/lbonn/rofi) installed on your system
 - [wl-clipboard](https://github.com/bugaevc/wl-clipboard)
 - [cliphist](https://github.com/sentriz/cliphist)
+- Optional [wtype](https://github.com/atx/wtype) for -p flag functionality
 
 ## Cliphist integration
 
@@ -157,6 +158,9 @@ Options:
   -h, --help                             Print help
   -V, --version                          Print version
 ```
+
+> [!NOTE]
+> The `-p` flag requires `wtype` to be installed to function properly. Pasting might not work in Electron-based apps
 
 - Through a configuration file, either on `$XDG_CONFIG_HOME/rofi-cliphist.toml`
 or the path specified using the `-f/--config` flag
