@@ -43,7 +43,7 @@ pub struct Clipboard {
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct PasteEnabled {
     pub flag: bool,
 }
@@ -122,14 +122,6 @@ impl Default for Clipboard {
     fn default() -> Self {
         Self {
             path: "wl-copy".to_string(),
-        }
-    }
-}
-
-impl Default for PasteEnabled {
-    fn default() -> Self {
-        Self {
-            flag: false,
         }
     }
 }

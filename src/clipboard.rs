@@ -38,7 +38,7 @@ impl Clipboard {
         trace!("Pasting from clipboard");
 
         let mut child = std::process::Command::new("wtype")
-            .args(&["-M", "ctrl", "-k", "v", "-m", "ctrl"])
+            .args(["-M", "ctrl", "-k", "v", "-m", "ctrl"])
             .spawn()
             .context("Error executing wtype")?;
 
