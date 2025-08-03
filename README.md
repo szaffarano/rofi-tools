@@ -153,6 +153,7 @@ Options:
   -c, --cliphist-path <CLIPHIST_PATH>    Path to cliphist executable [default: cliphist]
   -w, --clipboard-path <CLIPBOARD_PATH>  Path to wl-copy executable [default: wl-copy]
   -f, --config <FILE>                    Sets a custom config file
+  -p, --paste-enabled                    Enables paste after selection
   -h, --help                             Print help
   -V, --version                          Print version
 ```
@@ -169,6 +170,9 @@ path = "cliphist"
 
 [clipboard]
 path = "wl-copy"
+
+[paste_enabled]
+flag = false
 
 [text_mode_config]
 title = "Text"

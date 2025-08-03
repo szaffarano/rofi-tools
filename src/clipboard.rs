@@ -33,4 +33,19 @@ impl Clipboard {
         }
         Ok(())
     }
+
+    pub fn paste(&self) -> anyhow::Result<()> {
+        trace!("Pasting from clipboard");
+
+        let mut child = std::process::Command::new("wtype")
+            .args(&["-M", "ctrl", "-k", "v", "-m", "ctrl"])
+            .spawn()
+            .context("Error executing wtype")?;
+
+        let status = child.wait().context("Error executing wtype")?;
+        if !status.success() {
+            bail!("Error executing wtype");
+        }
+        Ok(())
+    }
 }

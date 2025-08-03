@@ -30,6 +30,10 @@ struct Args {
     /// Sets a custom config file
     #[arg(short = 'f', long, value_name = "FILE")]
     config: Option<PathBuf>,
+
+    /// Enables paste after selection
+    #[arg(short = 'p', long)]
+    paste_enabled: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -72,6 +76,7 @@ fn main() -> anyhow::Result<()> {
         cache,
         cliphist,
         clipboard,
+        cfg.paste_enabled.flag,
         rofi::cliphist_mode::ClipHistModeConfig {
             text_mode: cfg.text_mode_config,
             image_mode: cfg.image_mode_config,
@@ -87,4 +92,5 @@ fn merge_args_into_config(cfg: &mut config::Config, args: Args) {
     cfg.rofi.path = args.rofi_path.unwrap_or(cfg.rofi.path.clone());
     cfg.clipboard.path = args.clipboard_path.unwrap_or(cfg.clipboard.path.clone());
     cfg.cliphist.path = args.cliphist_path.unwrap_or(cfg.cliphist.path.clone());
+    cfg.paste_enabled.flag = args.paste_enabled || cfg.paste_enabled.flag;
 }
