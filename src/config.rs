@@ -14,6 +14,8 @@ pub struct Config {
     pub cliphist: ClipHist,
     #[serde(default)]
     pub clipboard: Clipboard,
+    #[serde(default)]
+    pub paste_enabled: PasteEnabled,
     #[serde(default = "default_image_mode_config")]
     pub image_mode_config: ModeConfig,
     #[serde(default = "default_text_mode_config")]
@@ -39,6 +41,11 @@ pub struct ClipHist {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Clipboard {
     pub path: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct PasteEnabled {
+    pub flag: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -73,6 +80,7 @@ impl Default for Config {
             rofi: Rofi::default(),
             cliphist: ClipHist::default(),
             clipboard: Clipboard::default(),
+            paste_enabled: PasteEnabled::default(),
             image_mode_config: ModeConfig {
                 title: "Images".to_string(),
                 shortcut: "Alt+i".to_string(),
