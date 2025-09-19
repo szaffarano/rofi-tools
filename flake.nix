@@ -27,7 +27,7 @@
           packages = {
             rofi-cliphist = rustPlatform.buildRustPackage {
               pname = "rofi-cliphist";
-              version = "0.3.0";
+              version = "0.4.1";
 
               src = lib.cleanSource ./.;
               cargoLock = {
