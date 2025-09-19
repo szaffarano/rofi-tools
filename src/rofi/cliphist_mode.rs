@@ -230,7 +230,7 @@ impl ClipHistMode {
 
         let exclusions = entries
             .iter()
-            .map(|e| (*e as &dyn CacheEntry))
+            .map(|e| *e as &dyn CacheEntry)
             .map(|e| e.id())
             .collect::<Vec<_>>();
 
