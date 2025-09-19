@@ -86,7 +86,7 @@
               rust-analyzer
 
               # rofi
-              rofi-wayland
+              rofi
               cairo
               pango
               pkg-config
