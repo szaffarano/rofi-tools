@@ -34,6 +34,7 @@ pub struct ClipHistMode {
     cache: SimpleCache,
     cliphist: ClipHist,
     clipboard: Clipboard,
+    paste_enabled: bool,
     txt: RofiState,
     img: RofiState,
     mode: Mode,
@@ -51,6 +52,7 @@ impl ClipHistMode {
         cache: SimpleCache,
         cliphist: ClipHist,
         clipboard: Clipboard,
+        paste_enabled: bool,
         config: ClipHistModeConfig,
     ) -> anyhow::Result<Self> {
         trace!("Creating ClipHistMode");
@@ -68,6 +70,7 @@ impl ClipHistMode {
             cache,
             cliphist,
             clipboard,
+            paste_enabled,
             txt: RofiState {
                 entries: txt,
                 options: RofiOptions::new(
@@ -151,6 +154,11 @@ impl ClipHistMode {
                             .value_of(cliphist_id)
                             .context("Error getting cliphist entry")?,
                     )?;
+
+                    if self.paste_enabled {
+                        self.clipboard.paste()?;
+                    }
+
                     return Ok(());
                 }
                 RofiResult::Keyboard { key, id } => {
