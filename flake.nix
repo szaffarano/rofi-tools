@@ -27,7 +27,7 @@
           packages = {
             rofi-cliphist = rustPlatform.buildRustPackage {
               pname = "rofi-cliphist";
-              version = "0.4.1";
+              version = "0.4.2";
 
               src = lib.cleanSource ./.;
               cargoLock = {
@@ -71,7 +71,7 @@
           };
 
           devShells.default = mkShell {
-            inherit (self.checks.${pkgs.system}.pre-commit-check) shellHook;
+            inherit (self.checks.${pkgs.stdenv.hostPlatform.system}.pre-commit-check) shellHook;
 
             inputsFrom = builtins.attrValues self.packages.${system};
             packages = [
