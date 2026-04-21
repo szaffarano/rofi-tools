@@ -30,10 +30,15 @@ struct Args {
     /// Sets a custom config file
     #[arg(short = 'f', long, value_name = "FILE")]
     config: Option<PathBuf>,
+
+    /// Sets a custom theme
+    #[arg(short = 't', long, value_name = "THEME")]
+    theme: Option<PathBuf>,
 }
 
 fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
+    let mut args = Args::parse();
+    let theme = args.theme.take();
 
     simple_logger::init_with_level(args.verbose.log_level().unwrap_or(Level::Error))?;
 
@@ -63,7 +68,7 @@ fn main() -> anyhow::Result<()> {
     let cliphist = cliphist::new(cfg.cliphist.path);
     let cache = cache::SimpleCache::new("rofi-cliphist/thumbs-new").expect("Error creating cache");
     let clipboard = clipboard::new(cfg.clipboard.path);
-    let rofi = rofi::new(cfg.rofi.path);
+    let rofi = rofi::new(cfg.rofi.path, theme);
 
     debug!("Starting ClipHistMode");
 
@@ -84,7 +89,11 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn merge_args_into_config(cfg: &mut config::Config, args: Args) {
-    cfg.rofi.path = args.rofi_path.unwrap_or(cfg.rofi.path.clone());
-    cfg.clipboard.path = args.clipboard_path.unwrap_or(cfg.clipboard.path.clone());
-    cfg.cliphist.path = args.cliphist_path.unwrap_or(cfg.cliphist.path.clone());
+    cfg.rofi.path = args.rofi_path.unwrap_or_else(|| cfg.rofi.path.clone());
+    cfg.clipboard.path = args
+        .clipboard_path
+        .unwrap_or_else(|| cfg.clipboard.path.clone());
+    cfg.cliphist.path = args
+        .cliphist_path
+        .unwrap_or_else(|| cfg.cliphist.path.clone());
 }
