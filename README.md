@@ -153,6 +153,7 @@ Options:
   -c, --cliphist-path <CLIPHIST_PATH>    Path to cliphist executable [default: cliphist]
   -w, --clipboard-path <CLIPBOARD_PATH>  Path to wl-copy executable [default: wl-copy]
   -f, --config <FILE>                    Sets a custom config file
+  -t, --theme <THEME>                    Sets a custom theme
   -h, --help                             Print help
   -V, --version                          Print version
 ```
