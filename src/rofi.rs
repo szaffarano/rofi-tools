@@ -154,13 +154,13 @@ impl From<&RofiOptions> for Vec<String> {
             options.push("-p".into());
             options.push(prompt.into());
         }
-        for theme_str in &val.theme_str {
-            options.push("-theme-str".into());
-            options.push(theme_str.into());
-        }
         if let Some(theme) = &val.theme {
             options.push("-theme".into());
             options.push(theme.to_string_lossy().into_owned());
+        }
+        for theme_str in &val.theme_str {
+            options.push("-theme-str".into());
+            options.push(theme_str.into());
         }
 
         options
