@@ -64,10 +64,6 @@ impl ClipHistMode {
         let delete_shortcut = &config.delete_mode.shortcut;
         let delete_description = &config.delete_mode.description;
         let instance = Self {
-            rofi,
-            cache,
-            cliphist,
-            clipboard,
             txt: RofiState {
                 entries: txt,
                 options: RofiOptions::new(
@@ -88,6 +84,7 @@ impl ClipHistMode {
                         ),
                     ],
                     Self::theme(Mode::Text),
+                    rofi.theme.clone(),
                 ),
             },
             img: RofiState {
@@ -110,8 +107,13 @@ impl ClipHistMode {
                         ),
                     ],
                     Self::theme(Mode::Image),
+                    rofi.theme.clone(),
                 ),
             },
+            rofi,
+            cache,
+            cliphist,
+            clipboard,
             mode: Mode::Text,
         };
 

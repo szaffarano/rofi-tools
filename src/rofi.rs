@@ -1,6 +1,7 @@
 use std::{
     io::{Read, Write},
     os::unix::process::ExitStatusExt,
+    path::PathBuf,
     process::{Command, Stdio},
 };
 
@@ -35,6 +36,7 @@ pub enum RofiResult {
 /// API to interact with rofi using command execution.
 pub struct Rofi {
     pub bin: String,
+    pub theme: Option<PathBuf>,
 }
 
 /// Options to configure rofi when spawning it.
@@ -48,6 +50,7 @@ pub struct RofiOptions {
     pub prompt: Option<String>,
     pub selected_row: usize,
     pub theme_str: Vec<String>,
+    pub theme: Option<PathBuf>,
 }
 
 /// Custom keyboard shortcuts for rofi.
@@ -70,6 +73,7 @@ impl Default for RofiOptions {
             prompt: None,
             selected_row: 0,
             theme_str: vec![],
+            theme: None,
         }
     }
 }
@@ -80,6 +84,7 @@ impl RofiOptions {
         mesg: impl Into<String>,
         custom_kbs: K,
         theme_str: I,
+        theme: Option<PathBuf>,
     ) -> Self
     where
         I: IntoIterator<Item = S>,
@@ -92,6 +97,7 @@ impl RofiOptions {
             prompt: Some(prompt.into()),
             custom_kbs: custom_kbs.into_iter().collect::<Vec<_>>(),
             theme_str: theme_str.into_iter().map(|s| s.into()).collect::<Vec<_>>(),
+            theme,
             ..Default::default()
         }
     }
@@ -148,10 +154,15 @@ impl From<&RofiOptions> for Vec<String> {
             options.push("-p".into());
             options.push(prompt.into());
         }
+        if let Some(theme) = &val.theme {
+            options.push("-theme".into());
+            options.push(theme.to_string_lossy().into_owned());
+        }
         for theme_str in &val.theme_str {
             options.push("-theme-str".into());
             options.push(theme_str.into());
         }
+
         options
     }
 }
@@ -274,6 +285,9 @@ impl RofiEntry for ClipHistEntry {
     }
 }
 
-pub fn new(bin: impl Into<String>) -> Rofi {
-    Rofi { bin: bin.into() }
+pub fn new(bin: impl Into<String>, theme: Option<PathBuf>) -> Rofi {
+    Rofi {
+        bin: bin.into(),
+        theme,
+    }
 }
