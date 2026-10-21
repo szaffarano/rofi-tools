@@ -24,6 +24,8 @@ pub struct Config {
     pub delete_previous_config: ModeConfig,
     #[serde(default = "default_delete_next_config")]
     pub delete_next_config: ModeConfig,
+    #[serde(default = "default_toggle_mode_config")]
+    pub toggle_mode_config: ModeConfig,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -90,6 +92,7 @@ impl Default for Config {
             },
             delete_previous_config: default_delete_previous_config(),
             delete_next_config: default_delete_next_config(),
+            toggle_mode_config: default_toggle_mode_config(),
         }
     }
 }
@@ -155,5 +158,13 @@ fn default_delete_next_config() -> ModeConfig {
         title: "Delete next".to_string(),
         shortcut: "Alt+n".to_string(),
         description: "Delete all entries after the selected one".to_string(),
+    }
+}
+
+fn default_toggle_mode_config() -> ModeConfig {
+    ModeConfig {
+        title: "Toggle".to_string(),
+        shortcut: "Alt+m".to_string(),
+        description: "Toggle text/image mode".to_string(),
     }
 }
