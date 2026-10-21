@@ -83,6 +83,7 @@ fn main() -> anyhow::Result<()> {
             delete_mode: cfg.delete_mode_config,
             delete_previous_mode: cfg.delete_previous_config,
             delete_next_mode: cfg.delete_next_config,
+            toggle_mode: cfg.toggle_mode_config,
         },
     )?
     .run()

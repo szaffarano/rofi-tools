@@ -195,4 +195,9 @@ description = "Delete all entries before the selected one"
 title = "Delete next"
 shortcut = "Alt+n"
 description = "Delete all entries after the selected one"
+
+[toggle_mode_config]
+title = "Toggle"
+shortcut = "Alt+m"
+description = "Toggle text/image mode"
 ```

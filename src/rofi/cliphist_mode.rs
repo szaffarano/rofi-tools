@@ -25,6 +25,7 @@ pub struct ClipHistModeConfig {
     pub delete_mode: config::ModeConfig,
     pub delete_previous_mode: config::ModeConfig,
     pub delete_next_mode: config::ModeConfig,
+    pub toggle_mode: config::ModeConfig,
 }
 
 /// A rofi "mode" to display the clipboard history
@@ -82,6 +83,11 @@ impl ClipHistMode {
                             &config.delete_next_mode.shortcut,
                             config.delete_next_mode.description.clone(),
                         ),
+                        KbCustom::new(
+                            6,
+                            &config.toggle_mode.shortcut,
+                            config.toggle_mode.description.clone(),
+                        ),
                     ],
                     Self::theme(Mode::Text),
                     rofi.theme.clone(),
@@ -104,6 +110,11 @@ impl ClipHistMode {
                             5,
                             &config.delete_next_mode.shortcut,
                             config.delete_next_mode.description.clone(),
+                        ),
+                        KbCustom::new(
+                            6,
+                            &config.toggle_mode.shortcut,
+                            config.toggle_mode.description.clone(),
                         ),
                     ],
                     Self::theme(Mode::Image),
@@ -181,6 +192,12 @@ impl ClipHistMode {
                             for entry in entries_to_delete {
                                 self.cliphist.remove(RofiEntry::id(&entry))?;
                             }
+                        }
+                        15 => {
+                            self.mode = match self.mode {
+                                Mode::Text => Mode::Image,
+                                Mode::Image => Mode::Text,
+                            };
                         }
                         _ => bail!("Unexpected key: {}", key),
                     }
