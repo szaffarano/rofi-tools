@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.2](https://github.com/szaffarano/rofi-tools/compare/v0.5.1...v0.5.2) (2026-11-20)
+
+
+### Miscellaneous Chores
+
+* **deps:** update googleapis/release-please-action action to v5 ([#108](https://github.com/szaffarano/rofi-tools/issues/108)) ([2616809](https://github.com/szaffarano/rofi-tools/commit/2616809e0a80abb211987f58ea8a0ca70c9026c3))
+* **deps:** update rust crate clap to v4.6.9 ([#109](https://github.com/szaffarano/rofi-tools/issues/109)) ([58ea355](https://github.com/szaffarano/rofi-tools/commit/58ea355484d2b33c4ea35985ef8eec772e0e8c46))
+* **release:** onboard release-please ([#106](https://github.com/szaffarano/rofi-tools/issues/106)) ([c732a2b](https://github.com/szaffarano/rofi-tools/commit/c732a2b09172b215379c1b6a91cd0f624550b929))
+
 ## [0.5.1](https://github.com/szaffarano/rofi-tools/compare/v0.5.0...v0.5.1) (2026-11-19)
 
 
@@ -172,4 +181,3 @@
 * Add renovate.json (#6) ([18d640a](https://github.com/szaffarano/rofi-tools/commit/18d640a8cc5aa4a28b36e33c48271d6955dda4e5))
 
 ## 0.0.1 (2025-01-24)
-
