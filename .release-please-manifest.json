@@ -1,5 +1,5 @@
 {
-  "crates/core": "0.5.2",
-  "crates/rofi-cliphist": "0.5.2",
-  "crates/rofi-clipcat": "0.5.2"
+  "crates/core": "0.6.0",
+  "crates/rofi-cliphist": "0.6.0",
+  "crates/rofi-clipcat": "0.6.0"
 }
