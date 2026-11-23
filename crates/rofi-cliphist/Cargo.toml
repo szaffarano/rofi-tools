@@ -20,4 +20,5 @@ anyhow = "1.0.95"
 clap = { version = "4.5.27", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
 log = "0.4.25"
+regex = "1.11.1"
 simple_logger = "5.0.0"

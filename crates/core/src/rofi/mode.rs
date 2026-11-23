@@ -2,24 +2,23 @@ use anyhow::{bail, Context};
 use log::{debug, trace};
 
 use crate::{
+    backend::{ClipEntry, ClipboardBackend},
     cache::{CacheEntry, SimpleCache},
-    clipboard::Clipboard,
-    cliphist::{ClipHist, ClipHistEntry},
     config,
     rofi::{self, RofiEntry},
 };
 
 use super::{KbCustom, Rofi, RofiOptions, RofiResult};
 
-/// Current mode to display
+/// Current display mode
 #[derive(Debug)]
-enum Mode {
+enum DisplayMode {
     Text,
     Image,
 }
 
-/// Configuration for the ClipHistMode
-pub struct ClipHistModeConfig {
+/// Configuration for the Mode
+pub struct ModeConfig {
     pub text_mode: config::ModeConfig,
     pub image_mode: config::ModeConfig,
     pub delete_mode: config::ModeConfig,
@@ -28,39 +27,37 @@ pub struct ClipHistModeConfig {
     pub toggle_mode: config::ModeConfig,
 }
 
-/// A rofi "mode" to display the clipboard history
+/// A rofi "mode" to display clipboard entries from a generic backend
 /// It keeps an internal state and spawns rofi to display the entries
-pub struct ClipHistMode {
+pub struct Mode<B: ClipboardBackend> {
     rofi: Rofi,
     cache: SimpleCache,
-    cliphist: ClipHist,
-    clipboard: Clipboard,
+    backend: B,
     txt: RofiState,
     img: RofiState,
-    mode: Mode,
+    mode: DisplayMode,
 }
 
 struct RofiState {
-    entries: Vec<ClipHistEntry>,
+    entries: Vec<ClipEntry>,
     options: RofiOptions,
 }
 
-impl ClipHistMode {
-    /// Create a new instance of ClipHistMode
+impl<B: ClipboardBackend> Mode<B> {
+    /// Create a new instance of Mode
     pub fn new(
         rofi: rofi::Rofi,
         cache: SimpleCache,
-        cliphist: ClipHist,
-        clipboard: Clipboard,
-        config: ClipHistModeConfig,
+        backend: B,
+        config: ModeConfig,
     ) -> anyhow::Result<Self> {
-        trace!("Creating ClipHistMode");
+        trace!("Creating Mode");
 
-        let (txt, img): (Vec<_>, Vec<_>) = cliphist
+        let (txt, img): (Vec<_>, Vec<_>) = backend
             .list()
-            .context("Error listing cliphist")?
+            .context("Error listing clipboard entries")?
             .into_iter()
-            .partition(|e| matches!(e, ClipHistEntry::Text { .. }));
+            .partition(|e| matches!(e, ClipEntry::Text { .. }));
 
         let delete_shortcut = &config.delete_mode.shortcut;
         let delete_description = &config.delete_mode.description;
@@ -68,7 +65,7 @@ impl ClipHistMode {
             txt: RofiState {
                 entries: txt,
                 options: RofiOptions::new(
-                    Self::title(Mode::Text),
+                    Self::title(DisplayMode::Text),
                     "",
                     [
                         KbCustom::new(1, config.image_mode.shortcut, config.image_mode.description),
@@ -89,14 +86,14 @@ impl ClipHistMode {
                             config.toggle_mode.description.clone(),
                         ),
                     ],
-                    Self::theme(Mode::Text),
+                    Self::theme(DisplayMode::Text),
                     rofi.theme.clone(),
                 ),
             },
             img: RofiState {
                 entries: img,
                 options: RofiOptions::new(
-                    Self::title(Mode::Image),
+                    Self::title(DisplayMode::Image),
                     "",
                     [
                         KbCustom::new(2, config.text_mode.shortcut, config.text_mode.description),
@@ -117,15 +114,14 @@ impl ClipHistMode {
                             config.toggle_mode.description.clone(),
                         ),
                     ],
-                    Self::theme(Mode::Image),
+                    Self::theme(DisplayMode::Image),
                     rofi.theme.clone(),
                 ),
             },
             rofi,
             cache,
-            cliphist,
-            clipboard,
-            mode: Mode::Text,
+            backend,
+            mode: DisplayMode::Text,
         };
 
         Ok(instance)
@@ -133,14 +129,14 @@ impl ClipHistMode {
 
     /// This is the "main loop" of the mode
     pub fn run(&mut self) -> anyhow::Result<()> {
-        debug!("Running ClipHistMode");
+        debug!("Running Mode");
 
         loop {
             self.sync_cache()?;
 
             let current = match self.mode {
-                Mode::Text => &mut self.txt,
-                Mode::Image => &mut self.img,
+                DisplayMode::Text => &mut self.txt,
+                DisplayMode::Image => &mut self.img,
             };
 
             let entries = current
@@ -158,12 +154,10 @@ impl ClipHistMode {
                     current.options.selected_row = id;
 
                     let entry = current.entries.get(id).expect("Invalid id");
-                    let cliphist_id = RofiEntry::id(entry);
-                    self.clipboard.copy(
-                        self.cliphist
-                            .value_of(cliphist_id)
-                            .context("Error getting cliphist entry")?,
-                    )?;
+                    let entry_id = entry.id();
+                    self.backend
+                        .activate(entry_id)
+                        .context("Error activating entry")?;
                     return Ok(());
                 }
                 RofiResult::Keyboard { key, id } => {
@@ -171,32 +165,32 @@ impl ClipHistMode {
 
                     match key {
                         10 => {
-                            self.mode = Mode::Image;
+                            self.mode = DisplayMode::Image;
                         }
                         11 => {
-                            self.mode = Mode::Text;
+                            self.mode = DisplayMode::Text;
                         }
                         12 => {
                             let entry = current.entries.remove(id);
-                            self.cliphist.remove(RofiEntry::id(&entry))?;
+                            self.backend.remove(entry.id())?;
                         }
                         13 => {
                             let entries_to_delete = current.entries.drain(..id).collect::<Vec<_>>();
                             for entry in entries_to_delete {
-                                self.cliphist.remove(RofiEntry::id(&entry))?;
+                                self.backend.remove(entry.id())?;
                             }
                         }
                         14 => {
                             let entries_to_delete =
                                 current.entries.drain(id + 1..).collect::<Vec<_>>();
                             for entry in entries_to_delete {
-                                self.cliphist.remove(RofiEntry::id(&entry))?;
+                                self.backend.remove(entry.id())?;
                             }
                         }
                         15 => {
                             self.mode = match self.mode {
-                                Mode::Text => Mode::Image,
-                                Mode::Image => Mode::Text,
+                                DisplayMode::Text => DisplayMode::Image,
+                                DisplayMode::Image => DisplayMode::Text,
                             };
                         }
                         _ => bail!("Unexpected key: {}", key),
@@ -224,25 +218,21 @@ impl ClipHistMode {
     fn sync_cache(&self) -> anyhow::Result<usize> {
         trace!("Syncing cache");
 
-        let entries = self.cliphist.list().context("Error listing cliphist")?;
+        let entries = self
+            .backend
+            .list()
+            .context("Error listing clipboard entries")?;
 
-        let entries = entries
-            .iter()
-            .filter(|e| matches!(e, ClipHistEntry::Image { .. }))
-            .collect::<Vec<_>>();
+        let entries = entries.iter().filter(|e| e.is_image()).collect::<Vec<_>>();
 
         let entries = entries.as_slice();
 
         for entry in entries {
             if !self.cache.exists(&CacheEntry::id(*entry)) {
-                let id = match entry {
-                    ClipHistEntry::Text { id, .. } => id,
-                    ClipHistEntry::Image { id, .. } => id,
-                };
                 let value = self
-                    .cliphist
-                    .value_of(id.into())
-                    .context("Error getting cliphist entry")?;
+                    .backend
+                    .raw_bytes(entry.id())
+                    .context("Error getting entry bytes")?;
                 self.cache.add(*entry, value);
             }
         }
@@ -256,15 +246,15 @@ impl ClipHistMode {
         self.cache.prune(exclusions).context("Error syncing cache")
     }
 
-    fn theme(mode: Mode) -> Vec<String> {
+    fn theme(mode: DisplayMode) -> Vec<String> {
         trace!("Switching theme to {mode:?}");
 
         match mode {
-        Mode::Text => vec![
+        DisplayMode::Text => vec![
             "element { children: [element-text]; orientation: vertical; }".into(),
             "listview { layout: vertical; }".into(),
         ],
-        Mode::Image => vec![
+        DisplayMode::Image => vec![
             "element { children: [element-icon]; orientation: vertical;}".into(),
             "element-icon { size: 228px; padding: 0px; }".into(),
             "listview { layout: vertical; lines: 3; columns: 3; fixed-height: true; fixed-columns: true; }".into(),
@@ -272,10 +262,106 @@ impl ClipHistMode {
     }
     }
 
-    fn title(mode: Mode) -> String {
+    fn title(mode: DisplayMode) -> String {
         match mode {
-            Mode::Text => "Texts".into(),
-            Mode::Image => "Images".into(),
+            DisplayMode::Text => "Texts".into(),
+            DisplayMode::Image => "Images".into(),
         }
+    }
+}
+
+/// Build the stdin bytes for rofi from entries and cache
+///
+/// shortcut: titles are single-line per backend contract; raw newlines would break rofi index framing
+pub fn render_entries(entries: &[&dyn RofiEntry], cache: &SimpleCache) -> anyhow::Result<Vec<u8>> {
+    let mut buffer = Vec::new();
+    for entry in entries {
+        buffer.extend_from_slice(entry.label().as_bytes());
+        if let Some(icon) = entry.icon() {
+            let cached = cache.path(&icon);
+            if cached.exists() {
+                buffer.extend_from_slice(
+                    format!("\0icon\x1f{}", cached.to_str().context("resolving icon")?).as_bytes(),
+                );
+            } else {
+                buffer.extend_from_slice(format!("\0icon\x1f{icon}").as_bytes());
+            }
+        }
+        buffer.push(b'\n');
+    }
+    Ok(buffer)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::backend::{ClipEntry, ClipboardBackend};
+    use crate::cache::{CacheEntry, SimpleCache};
+    use crate::rofi::RofiEntry;
+
+    use super::render_entries;
+
+    #[expect(dead_code, reason = "test fixture")]
+    struct FakeBackend {
+        entries: Vec<ClipEntry>,
+    }
+
+    impl ClipboardBackend for FakeBackend {
+        fn list(&self) -> anyhow::Result<Vec<ClipEntry>> {
+            Ok(self.entries.clone())
+        }
+        fn raw_bytes(&self, _id: &str) -> anyhow::Result<Vec<u8>> {
+            Ok(vec![])
+        }
+        fn remove(&self, _id: &str) -> anyhow::Result<()> {
+            Ok(())
+        }
+        fn activate(&self, _id: &str) -> anyhow::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn feeds_icon_frame_for_images() {
+        #[expect(clippy::useless_vec, reason = "need owned vec for cache operations")]
+        let entries = vec![
+            ClipEntry::Text {
+                id: "1".to_string(),
+                title: "Sample text entry".to_string(),
+            },
+            ClipEntry::Image {
+                id: "2".to_string(),
+                content_type: "png".to_string(),
+            },
+        ];
+        let cache = SimpleCache::new("test-cache").unwrap();
+
+        // Pre-populate cache with a dummy image file for the image entry
+        let cache_key = CacheEntry::id(&entries[1]);
+        cache.add(&entries[1], vec![0x89, 0x50, 0x4E, 0x47]); // minimal PNG header
+
+        let entry_refs: Vec<&dyn RofiEntry> = entries.iter().map(|e| e as &dyn RofiEntry).collect();
+        let output = render_entries(&entry_refs, &cache).unwrap();
+        let output_str = String::from_utf8_lossy(&output);
+
+        // Split by newlines to verify exact entry count
+        let lines: Vec<&str> = output_str.trim_end().split('\n').collect();
+        assert_eq!(lines.len(), 2, "Should have exactly 2 rofi entries");
+
+        // First entry: text with no icon frame
+        assert!(lines[0].contains("Sample text entry"));
+        assert!(
+            !lines[0].contains("\0icon\x1f"),
+            "Text entry should not have icon frame"
+        );
+
+        // Second entry: image with icon frame pointing to cached file
+        assert!(lines[1].contains("\0icon\x1f"));
+        let cache_path = cache.path(&cache_key);
+        assert!(cache_path.exists(), "Cache file should exist");
+        let cache_path_str = cache_path.to_str().unwrap();
+        assert!(
+            lines[1].contains(cache_path_str),
+            "Image entry should reference cached file path"
+        );
     }
 }
