@@ -27,6 +27,10 @@
     "crates/rofi-cliphist": {
       "component": "rofi-cliphist",
       "changelog-path": "CHANGELOG.md"
+    },
+    "crates/rofi-clipcat": {
+      "component": "rofi-clipcat",
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }

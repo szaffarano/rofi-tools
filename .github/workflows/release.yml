@@ -26,6 +26,10 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ steps.rust_toolchain.outputs.cachekey }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         shell: bash
         run: |
