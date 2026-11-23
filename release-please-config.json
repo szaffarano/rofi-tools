@@ -1,23 +1,38 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "rust",
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance Improvements" },
+    { "type": "chore", "section": "Miscellaneous Chores" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "docs", "section": "Documentation", "hidden": true },
+    { "type": "style", "section": "Styles", "hidden": true },
+    { "type": "refactor", "section": "Code Refactoring", "hidden": true },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build System", "hidden": true },
+    { "type": "ci", "section": "Continuous Integration", "hidden": true }
+  ],
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "rofi-tools",
+      "components": ["roto-core", "rofi-cliphist"]
+    },
+    {
+      "type": "cargo-workspace",
+      "merge": false
+    }
+  ],
   "packages": {
+    "crates/core": {
+      "component": "roto-core",
+      "changelog-path": "CHANGELOG.md"
+    },
     "crates/rofi-cliphist": {
-      "release-type": "rust",
-      "include-component-in-tag": false,
-      "changelog-path": "CHANGELOG.md",
-      "changelog-sections": [
-        { "type": "feat", "section": "Features" },
-        { "type": "fix", "section": "Bug Fixes" },
-        { "type": "perf", "section": "Performance Improvements" },
-        { "type": "chore", "section": "Miscellaneous Chores" },
-        { "type": "revert", "section": "Reverts" },
-        { "type": "docs", "section": "Documentation", "hidden": true },
-        { "type": "style", "section": "Styles", "hidden": true },
-        { "type": "refactor", "section": "Code Refactoring", "hidden": true },
-        { "type": "test", "section": "Tests", "hidden": true },
-        { "type": "build", "section": "Build System", "hidden": true },
-        { "type": "ci", "section": "Continuous Integration", "hidden": true }
-      ]
+      "component": "rofi-cliphist",
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }

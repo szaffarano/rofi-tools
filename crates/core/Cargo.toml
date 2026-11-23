@@ -1,6 +1,6 @@
 [package]
 name = "roto-core"
-version.workspace = true
+version = "0.5.2"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

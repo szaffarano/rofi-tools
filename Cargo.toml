@@ -3,7 +3,6 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-version = "0.5.2"
 edition = "2021"
 authors = ["Sebastián Zaffarano sebas@zaffarano.com.ar"]
 license = "MIT"

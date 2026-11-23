@@ -1,6 +1,6 @@
 [package]
 name = "rofi-cliphist"
-version.workspace = true
+version = "0.5.2"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -15,7 +15,7 @@ name = "rofi-cliphist"
 path = "src/main.rs"
 
 [dependencies]
-roto-core = { path = "../core" }
+roto-core = { path = "../core", version = "0.5.2" }
 anyhow = "1.0.95"
 clap = { version = "4.5.27", features = ["derive"] }
 clap-verbosity-flag = "3.0.2"
