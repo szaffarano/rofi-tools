@@ -1,10 +1,13 @@
 use std::path::PathBuf;
 
+mod backend;
+
 use anyhow::bail;
+use backend::CliphistBackend;
 use clap::Parser;
 use log::{debug, info, Level};
 use roto_core::{
-    cache, clipboard, cliphist, config,
+    cache, config,
     rofi::{self, mode::Mode, mode::ModeConfig},
 };
 
@@ -65,18 +68,16 @@ fn main() -> anyhow::Result<()> {
 
     merge_args_into_config(&mut cfg, args);
 
-    let cliphist = cliphist::new(cfg.cliphist.path);
+    let backend = CliphistBackend::new(&cfg.cliphist.path, &cfg.clipboard.path);
     let cache = cache::SimpleCache::new("rofi-cliphist/thumbs-new").expect("Error creating cache");
-    let clipboard = clipboard::new(cfg.clipboard.path);
     let rofi = rofi::new(cfg.rofi.path, theme);
 
-    debug!("Starting ClipHistMode");
+    debug!("Starting Mode");
 
     Mode::new(
         rofi,
         cache,
-        cliphist,
-        clipboard,
+        backend,
         ModeConfig {
             text_mode: cfg.text_mode_config,
             image_mode: cfg.image_mode_config,

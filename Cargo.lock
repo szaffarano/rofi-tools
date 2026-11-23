@@ -346,6 +346,7 @@ dependencies = [
  "clap",
  "clap-verbosity-flag",
  "log",
+ "regex",
  "roto-core",
  "simple_logger",
 ]
