@@ -30,6 +30,10 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Cache
         uses: actions/cache@v6
         with:
@@ -59,6 +63,10 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/cache@v6
         with:
           path: |

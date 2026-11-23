@@ -23,25 +23,61 @@
   }:
     flake-utils.lib.eachSystem [flake-utils.lib.system.x86_64-linux] (
       system:
-        with nixpkgs.legacyPackages.${system}; {
+        with nixpkgs.legacyPackages.${system}; let
+          # The workspace Cargo.lock pulls clipcat-base/client/proto from a git tag
+          # (not crates.io), so Nix needs an explicit output hash for that source.
+          # All three crates share the same git rev, hence the same hash.
+          clipcatGitHash = "sha256-t9uDwpV2bLMNp2mxa8HnSCnk+oSKrEPo2r136M0f/Ww=";
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+            outputHashes = {
+              "clipcat-base-0.27.0" = clipcatGitHash;
+              "clipcat-client-0.27.0" = clipcatGitHash;
+              "clipcat-proto-0.27.0" = clipcatGitHash;
+            };
+          };
+          # Read each binary's version from its own crate manifest so release-please
+          # version bumps flow into the flake automatically (no hardcoded version).
+          crateVersion = path: (builtins.fromTOML (builtins.readFile path)).package.version;
+        in {
           packages = {
             rofi-cliphist = rustPlatform.buildRustPackage {
               pname = "rofi-cliphist";
-              version = "0.4.2";
+              version = crateVersion ./crates/rofi-cliphist/Cargo.toml;
 
               src = lib.cleanSource ./.;
-              cargoLock = {
-                lockFile = ./Cargo.lock;
-              };
+              inherit cargoLock;
 
-              cargoBuildFlags = [ "-p" "rofi-cliphist" ];
-              cargoTestFlags = [ "-p" "rofi-cliphist" ];
+              cargoBuildFlags = ["-p" "rofi-cliphist"];
+              cargoTestFlags = ["-p" "rofi-cliphist"];
 
               meta = with lib; {
-                description = "Rofi extensions";
-                homepage = "https://github.com/szaffarano/rofi-cliphist";
+                description = "Clipboard history tool for Rofi using cliphist";
+                homepage = "https://github.com/szaffarano/rofi-tools";
                 license = licenses.mit;
                 mainProgram = "rofi-cliphist";
+                maintainers = [];
+              };
+            };
+
+            rofi-clipcat = rustPlatform.buildRustPackage {
+              pname = "rofi-clipcat";
+              version = crateVersion ./crates/rofi-clipcat/Cargo.toml;
+
+              src = lib.cleanSource ./.;
+              inherit cargoLock;
+
+              # clipcat-proto compiles .proto files at build time via protoc.
+              nativeBuildInputs = [protobuf];
+
+              cargoBuildFlags = ["-p" "rofi-clipcat"];
+              cargoTestFlags = ["-p" "rofi-clipcat"];
+
+              meta = with lib; {
+                description = "Clipboard history tool for Rofi using clipcat";
+                homepage = "https://github.com/szaffarano/rofi-tools";
+                license = licenses.mit;
+                mainProgram = "rofi-clipcat";
                 maintainers = [];
               };
             };
@@ -93,6 +129,9 @@
               cairo
               pango
               pkg-config
+
+              # clipcat gRPC codegen (clipcat-proto build script)
+              protobuf
 
               # tools
               git

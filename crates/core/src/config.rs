@@ -121,7 +121,7 @@ impl Default for Clipboard {
     }
 }
 
-fn default_image_mode_config() -> ModeConfig {
+pub fn default_image_mode_config() -> ModeConfig {
     ModeConfig {
         title: "Images".to_string(),
         shortcut: "Alt+i".to_string(),
@@ -129,7 +129,7 @@ fn default_image_mode_config() -> ModeConfig {
     }
 }
 
-fn default_text_mode_config() -> ModeConfig {
+pub fn default_text_mode_config() -> ModeConfig {
     ModeConfig {
         title: "Texts".to_string(),
         shortcut: "Alt+t".to_string(),
@@ -137,7 +137,7 @@ fn default_text_mode_config() -> ModeConfig {
     }
 }
 
-fn default_delete_mode_config() -> ModeConfig {
+pub fn default_delete_mode_config() -> ModeConfig {
     ModeConfig {
         title: "Delete".to_string(),
         shortcut: "Alt+d".to_string(),
@@ -145,7 +145,7 @@ fn default_delete_mode_config() -> ModeConfig {
     }
 }
 
-fn default_delete_previous_config() -> ModeConfig {
+pub fn default_delete_previous_config() -> ModeConfig {
     ModeConfig {
         title: "Delete previous".to_string(),
         shortcut: "Alt+p".to_string(),
@@ -153,7 +153,7 @@ fn default_delete_previous_config() -> ModeConfig {
     }
 }
 
-fn default_delete_next_config() -> ModeConfig {
+pub fn default_delete_next_config() -> ModeConfig {
     ModeConfig {
         title: "Delete next".to_string(),
         shortcut: "Alt+n".to_string(),
@@ -161,7 +161,7 @@ fn default_delete_next_config() -> ModeConfig {
     }
 }
 
-fn default_toggle_mode_config() -> ModeConfig {
+pub fn default_toggle_mode_config() -> ModeConfig {
     ModeConfig {
         title: "Toggle".to_string(),
         shortcut: "Alt+m".to_string(),

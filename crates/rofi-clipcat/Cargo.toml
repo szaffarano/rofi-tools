@@ -1,0 +1,32 @@
+[package]
+name = "rofi-clipcat"
+version = "0.5.2"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Clipboard history tool for Rofi using clipcat"
+keywords = ["cli", "wayland", "rofi", "linux", "rofi-scripts"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "rofi-clipcat"
+path = "src/main.rs"
+
+[dependencies]
+roto-core = { path = "../core", version = "0.5.2" }
+anyhow = { workspace = true }
+clap = { workspace = true }
+clap-verbosity-flag = { workspace = true }
+log = { workspace = true }
+simple_logger = { workspace = true }
+tokio = { workspace = true }
+http = { workspace = true }
+clipcat-client = { workspace = true }
+clipcat-base = { workspace = true }
+mime = { workspace = true }
+time = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }
+directories-next = { workspace = true }

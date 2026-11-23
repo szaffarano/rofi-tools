@@ -8,3 +8,20 @@ authors = ["Sebastián Zaffarano sebas@zaffarano.com.ar"]
 license = "MIT"
 repository = "https://github.com/szaffarano/rofi-tools"
 homepage = "https://github.com/szaffarano/rofi-tools"
+
+[workspace.dependencies]
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+clap-verbosity-flag = "3"
+directories-next = "2"
+http = "1"
+log = "0.4"
+mime = "0.3"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+simple_logger = "5"
+time = "0.3"
+tokio = { version = "1", features = ["rt", "net", "time"] }
+toml = "1"
+clipcat-base = { git = "https://github.com/xrelkd/clipcat", tag = "v0.27.0" }
+clipcat-client = { git = "https://github.com/xrelkd/clipcat", tag = "v0.27.0" }
