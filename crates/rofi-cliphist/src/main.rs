@@ -5,7 +5,7 @@ use clap::Parser;
 use log::{debug, info, Level};
 use roto_core::{
     cache, clipboard, cliphist, config,
-    rofi::{self, cliphist_mode::ClipHistMode},
+    rofi::{self, mode::Mode, mode::ModeConfig},
 };
 
 #[derive(Parser, Debug)]
@@ -72,12 +72,12 @@ fn main() -> anyhow::Result<()> {
 
     debug!("Starting ClipHistMode");
 
-    ClipHistMode::new(
+    Mode::new(
         rofi,
         cache,
         cliphist,
         clipboard,
-        rofi::cliphist_mode::ClipHistModeConfig {
+        ModeConfig {
             text_mode: cfg.text_mode_config,
             image_mode: cfg.image_mode_config,
             delete_mode: cfg.delete_mode_config,

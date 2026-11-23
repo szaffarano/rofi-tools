@@ -2,6 +2,7 @@ use crate::cache::CacheEntry;
 use crate::rofi::RofiEntry;
 
 /// Neutral clipboard entry representation.
+#[derive(Clone)]
 pub enum ClipEntry {
     Text { id: String, title: String },
     Image { id: String, content_type: String },

@@ -8,9 +8,9 @@ use std::{
 use anyhow::Context;
 use log::{debug, trace};
 
-use crate::{cache, cliphist::ClipHistEntry};
+use crate::cache;
 
-pub mod cliphist_mode;
+pub mod mode;
 
 /// Entry to be displayed in rofi
 ///
@@ -256,29 +256,6 @@ impl Rofi {
         };
 
         Ok(result)
-    }
-}
-
-impl RofiEntry for ClipHistEntry {
-    fn id(&self) -> String {
-        match self {
-            ClipHistEntry::Text { id, .. } => id.into(),
-            ClipHistEntry::Image { id, .. } => id.into(),
-        }
-    }
-    fn icon(&self) -> Option<String> {
-        match self {
-            ClipHistEntry::Text { .. } => None,
-            ClipHistEntry::Image { id, content_type } => Some(format!("{id}.{content_type}")),
-        }
-    }
-    fn label(&self) -> String {
-        match self {
-            ClipHistEntry::Text { title, .. } => title.into(),
-            ClipHistEntry::Image { id, content_type } => {
-                format!("{id}.{content_type}")
-            }
-        }
     }
 }
 
