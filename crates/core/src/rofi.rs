@@ -197,25 +197,11 @@ impl Rofi {
         debug!("Executing rofi with command: {:?} {:?}", self.bin, options);
 
         if let Some(mut writer) = process.stdin.take() {
-            for entry in entries {
-                let mut str: Vec<u8> = Vec::new();
-                str.extend_from_slice(entry.label().to_string().as_bytes());
-                if let Some(icon) = &entry.icon() {
-                    let cached = cache.path(icon);
-                    if cached.exists() {
-                        str.extend_from_slice(
-                            format!("\0icon\x1f{}", cached.to_str().context("resolving icon")?)
-                                .as_bytes(),
-                        );
-                    } else {
-                        str.extend_from_slice(format!("\0icon\x1f{icon}").as_bytes());
-                    }
-                }
-                str.push(b'\n');
-                writer
-                    .write_all(&str)
-                    .context("writing entries to rofi through stdin")?;
-            }
+            let stdin_bytes =
+                mode::render_entries(entries, cache).context("building rofi stdin")?;
+            writer
+                .write_all(&stdin_bytes)
+                .context("writing entries to rofi through stdin")?;
         }
 
         let status = process.wait().context("waiting rofi's execution")?;

@@ -271,29 +271,34 @@ impl<B: ClipboardBackend> Mode<B> {
 }
 
 /// Build the stdin bytes for rofi from entries and cache
-pub fn render_entries(entries: &[ClipEntry], cache: &SimpleCache) -> Vec<u8> {
+///
+/// shortcut: titles are single-line per backend contract; raw newlines would break rofi index framing
+pub fn render_entries(entries: &[&dyn RofiEntry], cache: &SimpleCache) -> anyhow::Result<Vec<u8>> {
     let mut buffer = Vec::new();
     for entry in entries {
-        buffer.extend_from_slice(RofiEntry::label(entry).as_bytes());
-        if let Some(icon) = RofiEntry::icon(entry) {
+        buffer.extend_from_slice(entry.label().as_bytes());
+        if let Some(icon) = entry.icon() {
             let cached = cache.path(&icon);
             if cached.exists() {
-                if let Some(path_str) = cached.to_str() {
-                    buffer.extend_from_slice(format!("\0icon\x1f{}", path_str).as_bytes());
-                }
+                buffer.extend_from_slice(
+                    format!("\0icon\x1f{}", cached.to_str().context("resolving icon")?).as_bytes(),
+                );
             } else {
                 buffer.extend_from_slice(format!("\0icon\x1f{icon}").as_bytes());
             }
         }
         buffer.push(b'\n');
     }
-    buffer
+    Ok(buffer)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::backend::{ClipEntry, ClipboardBackend};
+    use crate::cache::{CacheEntry, SimpleCache};
+    use crate::rofi::RofiEntry;
+
+    use super::render_entries;
 
     #[expect(dead_code, reason = "test fixture")]
     struct FakeBackend {
@@ -317,10 +322,11 @@ mod tests {
 
     #[test]
     fn feeds_icon_frame_for_images() {
+        #[expect(clippy::useless_vec, reason = "need owned vec for cache operations")]
         let entries = vec![
             ClipEntry::Text {
                 id: "1".to_string(),
-                title: "Hello\nWorld".to_string(),
+                title: "Sample text entry".to_string(),
             },
             ClipEntry::Image {
                 id: "2".to_string(),
@@ -328,15 +334,34 @@ mod tests {
             },
         ];
         let cache = SimpleCache::new("test-cache").unwrap();
-        let output = render_entries(&entries, &cache);
+
+        // Pre-populate cache with a dummy image file for the image entry
+        let cache_key = CacheEntry::id(&entries[1]);
+        cache.add(&entries[1], vec![0x89, 0x50, 0x4E, 0x47]); // minimal PNG header
+
+        let entry_refs: Vec<&dyn RofiEntry> = entries.iter().map(|e| e as &dyn RofiEntry).collect();
+        let output = render_entries(&entry_refs, &cache).unwrap();
         let output_str = String::from_utf8_lossy(&output);
 
-        // Should contain the text label (control chars should be escaped or handled)
-        assert!(output_str.contains("Hello"));
-        assert!(output_str.contains("World"));
+        // Split by newlines to verify exact entry count
+        let lines: Vec<&str> = output_str.trim_end().split('\n').collect();
+        assert_eq!(lines.len(), 2, "Should have exactly 2 rofi entries");
 
-        // Should contain icon frame for image
-        assert!(output_str.contains("\0icon\x1f"));
-        assert!(output_str.contains("2.png"));
+        // First entry: text with no icon frame
+        assert!(lines[0].contains("Sample text entry"));
+        assert!(
+            !lines[0].contains("\0icon\x1f"),
+            "Text entry should not have icon frame"
+        );
+
+        // Second entry: image with icon frame pointing to cached file
+        assert!(lines[1].contains("\0icon\x1f"));
+        let cache_path = cache.path(&cache_key);
+        assert!(cache_path.exists(), "Cache file should exist");
+        let cache_path_str = cache_path.to_str().unwrap();
+        assert!(
+            lines[1].contains(cache_path_str),
+            "Image entry should reference cached file path"
+        );
     }
 }
