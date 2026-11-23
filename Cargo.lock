@@ -339,17 +339,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d902046e6a28a1e4c3cab97258a0ce11e994903f01c2d97a9447a0b3df85f4f6"
 
 [[package]]
-name = "roto"
+name = "rofi-cliphist"
 version = "0.5.2"
 dependencies = [
  "anyhow",
  "clap",
  "clap-verbosity-flag",
+ "log",
+ "roto-core",
+ "simple_logger",
+]
+
+[[package]]
+name = "roto-core"
+version = "0.5.2"
+dependencies = [
+ "anyhow",
  "directories-next",
  "log",
  "regex",
  "serde",
- "simple_logger",
  "toml",
 ]
 

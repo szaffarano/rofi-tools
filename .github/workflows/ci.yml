@@ -43,11 +43,11 @@ jobs:
       - name: rustfmt
         shell: bash
         run: |
-          cargo fmt -- --check
+          cargo fmt --all -- --check
       - name: Clippy
         shell: bash
         run: |
-          cargo clippy --features=${{ matrix.features }} --locked --tests -- -D warnings
+          cargo clippy --workspace --locked --tests -- -D warnings
   test:
     runs-on: ubuntu-latest
 
@@ -71,4 +71,4 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          cargo test --release
+          cargo test --workspace --release

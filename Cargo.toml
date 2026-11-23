@@ -1,23 +1,11 @@
-[package]
-name = "roto"
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
 version = "0.5.2"
 edition = "2021"
 authors = ["Sebastián Zaffarano sebas@zaffarano.com.ar"]
 license = "MIT"
-description = "Rofi extensions"
-readme = "README.md"
-homepage = "https://github.com/szaffarano/rofi-tools"
 repository = "https://github.com/szaffarano/rofi-tools"
-keywords = ["cli", "wayland", "rofi", "linux", "rofi-scripts"]
-categories = ["command-line-utilities"]
-
-[dependencies]
-anyhow = "1.0.95"
-clap = { version = "4.5.27", features = ["derive"] }
-clap-verbosity-flag = "3.0.2"
-directories-next = "2.0.0"
-log = "0.4.25"
-regex = "1.11.1"
-serde = { version = "1.0.217", features = ["derive"] }
-simple_logger = "5.0.0"
-toml = "1.0.0"
+homepage = "https://github.com/szaffarano/rofi-tools"

@@ -34,6 +34,9 @@
                 lockFile = ./Cargo.lock;
               };
 
+              cargoBuildFlags = [ "-p" "rofi-cliphist" ];
+              cargoTestFlags = [ "-p" "rofi-cliphist" ];
+
               meta = with lib; {
                 description = "Rofi extensions";
                 homepage = "https://github.com/szaffarano/rofi-cliphist";

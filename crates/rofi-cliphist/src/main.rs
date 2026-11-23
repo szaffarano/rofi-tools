@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::bail;
 use clap::Parser;
 use log::{debug, info, Level};
-use roto::{
+use roto_core::{
     cache, clipboard, cliphist, config,
     rofi::{self, cliphist_mode::ClipHistMode},
 };
