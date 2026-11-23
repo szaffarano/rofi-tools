@@ -1757,7 +1757,7 @@ checksum = "47b34b781b31e5d73e9fbc8689c70551fd1ade9a19e3e28cfec8580a79290cc4"
 
 [[package]]
 name = "rofi-clipcat"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1778,7 +1778,7 @@ dependencies = [
 
 [[package]]
 name = "rofi-cliphist"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1791,7 +1791,7 @@ dependencies = [
 
 [[package]]
 name = "roto-core"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "directories-next",
