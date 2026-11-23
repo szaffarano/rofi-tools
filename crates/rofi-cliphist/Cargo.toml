@@ -1,0 +1,23 @@
+[package]
+name = "rofi-cliphist"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Clipboard history tool for Rofi using cliphist"
+keywords = ["cli", "wayland", "rofi", "linux", "rofi-scripts"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "rofi-cliphist"
+path = "src/main.rs"
+
+[dependencies]
+roto-core = { path = "../core" }
+anyhow = "1.0.95"
+clap = { version = "4.5.27", features = ["derive"] }
+clap-verbosity-flag = "3.0.2"
+log = "0.4.25"
+simple_logger = "5.0.0"
