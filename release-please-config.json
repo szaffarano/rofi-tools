@@ -16,13 +16,7 @@
   ],
   "plugins": [
     {
-      "type": "linked-versions",
-      "groupName": "rofi-tools",
-      "components": ["roto-core", "rofi-cliphist"]
-    },
-    {
-      "type": "cargo-workspace",
-      "merge": false
+      "type": "cargo-workspace"
     }
   ],
   "packages": {
