@@ -229,11 +229,17 @@ impl<B: ClipboardBackend> Mode<B> {
 
         for entry in entries {
             if !self.cache.exists(&CacheEntry::id(*entry)) {
-                let value = self
-                    .backend
-                    .raw_bytes(entry.id())
-                    .context("Error getting entry bytes")?;
-                self.cache.add(*entry, value);
+                match self.backend.raw_bytes(entry.id()) {
+                    Ok(value) if !value.is_empty() => {
+                        self.cache.add(*entry, value);
+                    }
+                    Ok(_) => {
+                        debug!("Skipping thumbnail cache for {}: empty bytes", entry.id());
+                    }
+                    Err(e) => {
+                        debug!("Skipping thumbnail cache for {}: {}", entry.id(), e);
+                    }
+                }
             }
         }
 
@@ -362,6 +368,134 @@ mod tests {
         assert!(
             lines[1].contains(cache_path_str),
             "Image entry should reference cached file path"
+        );
+    }
+
+    #[test]
+    fn skips_empty_thumbnail() {
+        use anyhow::anyhow;
+        use std::sync::{Arc, Mutex};
+
+        #[derive(Clone)]
+        struct BadImageBackend {
+            entries: Vec<ClipEntry>,
+            raw_bytes_calls: Arc<Mutex<Vec<String>>>,
+        }
+
+        impl ClipboardBackend for BadImageBackend {
+            fn list(&self) -> anyhow::Result<Vec<ClipEntry>> {
+                Ok(self.entries.clone())
+            }
+            fn raw_bytes(&self, id: &str) -> anyhow::Result<Vec<u8>> {
+                self.raw_bytes_calls.lock().unwrap().push(id.to_string());
+                if id == "bad-empty" {
+                    Ok(vec![])
+                } else if id == "bad-error" {
+                    Err(anyhow!("simulated decode failure"))
+                } else {
+                    Ok(vec![0x89, 0x50, 0x4E, 0x47])
+                }
+            }
+            fn remove(&self, _id: &str) -> anyhow::Result<()> {
+                Ok(())
+            }
+            fn activate(&self, _id: &str) -> anyhow::Result<()> {
+                Ok(())
+            }
+        }
+
+        let entries = vec![
+            ClipEntry::Image {
+                id: "good".to_string(),
+                content_type: "png".to_string(),
+            },
+            ClipEntry::Image {
+                id: "bad-empty".to_string(),
+                content_type: "png".to_string(),
+            },
+            ClipEntry::Image {
+                id: "bad-error".to_string(),
+                content_type: "png".to_string(),
+            },
+        ];
+
+        let raw_bytes_calls = Arc::new(Mutex::new(Vec::new()));
+        let backend = BadImageBackend {
+            entries: entries.clone(),
+            raw_bytes_calls: raw_bytes_calls.clone(),
+        };
+
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let cache = SimpleCache::new(&format!("test-cache-bad-{}", timestamp)).unwrap();
+        let rofi = crate::rofi::new("rofi", None);
+        let config = super::ModeConfig {
+            text_mode: crate::config::ModeConfig {
+                title: "Text".to_string(),
+                shortcut: "Alt+1".to_string(),
+                description: "Text".to_string(),
+            },
+            image_mode: crate::config::ModeConfig {
+                title: "Image".to_string(),
+                shortcut: "Alt+2".to_string(),
+                description: "Image".to_string(),
+            },
+            delete_mode: crate::config::ModeConfig {
+                title: "Delete".to_string(),
+                shortcut: "Alt+3".to_string(),
+                description: "Delete".to_string(),
+            },
+            delete_previous_mode: crate::config::ModeConfig {
+                title: "Delete Prev".to_string(),
+                shortcut: "Alt+4".to_string(),
+                description: "Delete Prev".to_string(),
+            },
+            delete_next_mode: crate::config::ModeConfig {
+                title: "Delete Next".to_string(),
+                shortcut: "Alt+5".to_string(),
+                description: "Delete Next".to_string(),
+            },
+            toggle_mode: crate::config::ModeConfig {
+                title: "Toggle".to_string(),
+                shortcut: "Alt+6".to_string(),
+                description: "Toggle".to_string(),
+            },
+        };
+
+        let mode = super::Mode::new(rofi, cache, backend, config).unwrap();
+
+        // sync_cache should not error even with bad images
+        let result = mode.sync_cache();
+        assert!(result.is_ok(), "sync_cache should not error on bad images");
+
+        // The good entry should be cached
+        let good_key = CacheEntry::id(&entries[0]);
+        assert!(
+            mode.cache.path(&good_key).exists(),
+            "Good image should be cached"
+        );
+
+        // The bad entries should NOT be cached
+        let bad_empty_key = CacheEntry::id(&entries[1]);
+        assert!(
+            !mode.cache.path(&bad_empty_key).exists(),
+            "Empty image should not be cached"
+        );
+
+        let bad_error_key = CacheEntry::id(&entries[2]);
+        assert!(
+            !mode.cache.path(&bad_error_key).exists(),
+            "Error image should not be cached"
+        );
+
+        // All three entries should still be listable in image mode
+        assert_eq!(
+            mode.img.entries.len(),
+            3,
+            "All image entries should remain listable"
         );
     }
 }
