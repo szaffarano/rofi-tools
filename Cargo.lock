@@ -387,11 +387,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "clipcat-base"
+version = "0.27.1"
+source = "git+https://github.com/xrelkd/clipcat?tag=v0.27.1#2b73a45f05d2c8ab3d51293d7f44f3ea8e77e1d9"
+dependencies = [
+ "bytes",
+ "directories",
+ "http",
+ "humansize",
+ "image",
+ "mime",
+ "regex",
+ "semver",
+ "serde",
+ "sha2",
+ "snafu",
+ "time",
+ "tokio",
+]
+
+[[package]]
 name = "clipcat-client"
 version = "0.27.0"
 source = "git+https://github.com/xrelkd/clipcat?tag=v0.27.0#1cbeb104ca1a74bf62e4aab9cbb24d3256c25b84"
 dependencies = [
- "clipcat-base",
+ "clipcat-base 0.27.0",
  "clipcat-proto",
  "futures",
  "http",
@@ -411,7 +431,7 @@ name = "clipcat-proto"
 version = "0.27.0"
 source = "git+https://github.com/xrelkd/clipcat?tag=v0.27.0#1cbeb104ca1a74bf62e4aab9cbb24d3256c25b84"
 dependencies = [
- "clipcat-base",
+ "clipcat-base 0.27.0",
  "mime",
  "prost",
  "prost-build",
@@ -1762,7 +1782,7 @@ dependencies = [
  "anyhow",
  "clap",
  "clap-verbosity-flag",
- "clipcat-base",
+ "clipcat-base 0.27.1",
  "clipcat-client",
  "directories-next",
  "http",
