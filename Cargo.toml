@@ -24,4 +24,4 @@ time = "0.3"
 tokio = { version = "1", features = ["rt", "net", "time"] }
 toml = "1"
 clipcat-base = { git = "https://github.com/xrelkd/clipcat", tag = "v0.27.0" }
-clipcat-client = { git = "https://github.com/xrelkd/clipcat", tag = "v0.27.0" }
+clipcat-client = { git = "https://github.com/xrelkd/clipcat", tag = "v0.27.1" }
